@@ -1,13 +1,11 @@
 package wwwc.nees.joint.module.kao.test;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import joint.codegen.foaf.Person;
-import junit.framework.TestCase;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.openrdf.model.URI;
@@ -74,7 +72,22 @@ public class AbstractKAOTest {
         person.setFoafGender(gender);
         person.setFoafBirthday(birthday);
         kao.update(person);
-        assertNotNull("A instância não deve ser nula.", kao.retrieveInstance(ontologyURI, (String) firstName.toArray()[0]));
+        
+        Person p = kao.retrieveInstance(ontologyURI, (String) person.getFoafFirstName().toArray()[0]); // recupetando instancia
+        assertNotNull("A instância não deve ser nula.",p);
     }
+    
 
+    @Test
+    public void retrieveAllInstances() {
+        person = kao.create(ontologyURI, (String) firstName.toArray()[0]);
+        person.setFoafFirstName(firstName);
+        person.setFoafAge(age);
+        person.setFoafGender(gender);
+        person.setFoafBirthday(birthday);
+        kao.update(person);
+        
+        List<Object> instances = kao.retrieveAllInstances();
+        assertTrue(instances.size() > 0);
+    }
 }
