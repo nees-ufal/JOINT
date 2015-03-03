@@ -21,7 +21,7 @@ public interface QueryRunner {
      *
      * @return object <code>Object</code> result.
      */
-    public Object executeQueryAsSingleResult(String query, List<URI> contexts);
+    public Object executeQueryAsSingleResult(String query, URI... contexts);
 
     /**
      * Performs queries in the repository, returning a java.util.List of
@@ -31,7 +31,7 @@ public interface QueryRunner {
      *
      * @return <code>List<Object></code> a java.util.List with the results.
      */
-    public List<Object> executeQueryAsList(String query, List<URI> contexts);
+    public List<Object> executeQueryAsList(String query, URI... contexts);
 
     /**
      * Performs queries in the repository, returning a java.util.Iterator with
@@ -41,7 +41,7 @@ public interface QueryRunner {
      *
      * @return <code>Iterator<Object></code> a java.util.List with the results.
      */
-    public Iterator<Object> executeQueryAsIterator(String query, List<URI> contexts);
+    public Iterator<Object> executeQueryAsIterator(String query, URI... contexts);
 
     /**
      * Performs SPARQL queries in the repository, returning a boolean with the

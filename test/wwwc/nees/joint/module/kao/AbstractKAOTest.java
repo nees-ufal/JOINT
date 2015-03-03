@@ -1,49 +1,52 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package wwwc.nees.joint.module.kao;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import joint.codegen.foaf.Agent;
 import joint.codegen.foaf.Person;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.openrdf.model.URI;
 import org.openrdf.model.impl.URIImpl;
+import org.openrdf.util.iterators.Iterators;
 
 /**
- *
  * @author armando
  */
 public class AbstractKAOTest {
 
-    public AbstractKAOTest() {
-    }
-
-    @BeforeClass
-    public static void setUpClass() {
-    }
-
-    @AfterClass
-    public static void tearDownClass() {
-    }
+    private AbstractKAOImpl kao;
+    private String ontologyURI;
+    private URI foafGraph_A;
+    private URI foafGraph_B;
+    private String instanceName;
+    private URI[] graphs;
 
     @Before
     public void setUp() {
+        ontologyURI = "http://xmlns.com/foaf/0.1/";
+        foafGraph_A = new URIImpl(ontologyURI + "A/");
+        foafGraph_B = new URIImpl(ontologyURI + "B/");
+        graphs = new URI[]{new URIImpl(ontologyURI + "A/"), new URIImpl(ontologyURI + "B/")};
+//        graphs = new URI[]{null};
+        kao = new AbstractKAOImpl(Person.class);
+
+        instanceName = "Maria";
     }
 
     @After
     public void tearDown() {
-        AbstractKAOImpl kao = new AbstractKAOImpl(null);
-        kao.executeBooleanQuery("clear graph <sesame:nil>");
-        kao.executeBooleanQuery("clear graph <http://xmlns.com/foaf/0.1/>");
-        
+        kao.executeBooleanQuery("clear graph <" + foafGraph_A.toString() + ">");
+        kao.executeBooleanQuery("clear graph <" + foafGraph_B.toString() + ">");
+//        kao.executeBooleanQuery("clear graph <sesame:nil>");
+        kao = null;
+        ontologyURI = "";
+        foafGraph_A = null;
+        foafGraph_B = null;
+        instanceName = "";
     }
 
     /**
@@ -52,19 +55,11 @@ public class AbstractKAOTest {
     @Test
     public void testCreate() {
         System.out.println("create");
-        String ontologyURI = "http://xmlns.com/foaf/0.1/";
-        URI foafGraph = new URIImpl("http://xmlns.com/foaf/0.1/");
-        URI sesameGraph = new URIImpl("sesame:nil");
-        String instanceName = "Williams";
-        AbstractKAO kao = new AbstractKAOImpl(Person.class);
-        
-        //kao.addContext(foafGraph);
-        //kao.addContext(sesameGraph);
 
-        Object expResult = kao.create(ontologyURI, instanceName);
-        Object result = kao.retrieveInstance(ontologyURI, instanceName);
+        Person expected = kao.create(ontologyURI, instanceName, graphs);
+        Person result = kao.retrieveInstance(ontologyURI, instanceName, graphs);
 
-        assertEquals(expResult, result);
+        assertEquals(expected, result);
     }
 
     /**
@@ -73,14 +68,22 @@ public class AbstractKAOTest {
     @Test
     public void testCreateWithUniqueID() {
         System.out.println("createWithUniqueID");
-        String ontologyURI = "http://xmlns.com/foaf/0.1/";
         String instancePrefix = "Person_";
-        AbstractKAO kao = new AbstractKAOImpl(Person.class);
-        Person p1 = kao.createWithUniqueID(ontologyURI, instancePrefix);
-        Person p2 = kao.createWithUniqueID(ontologyURI, instancePrefix);
-        
-        List<Person> list = kao.retrieveAllInstances();
-        assertTrue((list.size() > 0) && (p1 != p2));
+        List<Person> expected = kao.retrieveAllInstances(graphs);
+        Person p1 = kao.createWithUniqueID(ontologyURI, instancePrefix, graphs);
+        Person p2 = kao.createWithUniqueID(ontologyURI, instancePrefix, graphs);
+        if (graphs == null) {
+            expected.add(p1);
+            expected.add(p2);
+        } else {
+            for (URI context : graphs) {
+                expected.add(p1);
+                expected.add(p2);
+            }
+        }
+        List<Person> result = kao.retrieveAllInstances(graphs);
+        assertEquals(expected.size(), result.size());
+        assertTrue(p1.toString() != p2.toString());
     }
 
     /**
@@ -89,12 +92,11 @@ public class AbstractKAOTest {
     @Test
     public void testDelete_String_String() {
         System.out.println("delete");
-        String ontologyURI = "";
-        String instanceName = "";
-        AbstractKAO instance = null;
-        instance.delete(ontologyURI, instanceName);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Person p = kao.create(ontologyURI, instanceName, graphs);
+        kao.delete(ontologyURI, instanceName, graphs);
+        Person p_exp = kao.retrieveInstance(ontologyURI, instanceName, graphs);
+        assertNotNull(p);
+        assertNull(p_exp);
     }
 
     /**
@@ -103,11 +105,10 @@ public class AbstractKAOTest {
     @Test
     public void testDelete_GenericType() {
         System.out.println("delete");
-        Object instance_2 = null;
-        AbstractKAO instance = null;
-        instance.delete(instance_2);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Person expected = kao.create(ontologyURI, instanceName, graphs);
+        kao.delete(expected, graphs);
+        Person result = kao.retrieveInstance(ontologyURI, instanceName, graphs);
+        assertNull(result);
     }
 
     /**
@@ -116,14 +117,10 @@ public class AbstractKAOTest {
     @Test
     public void testRetrieveInstance() {
         System.out.println("retrieveInstance");
-        String ontologyURI = "";
-        String instanceName = "";
-        AbstractKAO instance = null;
-        Object expResult = null;
-        Object result = instance.retrieveInstance(ontologyURI, instanceName);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Person expected = kao.create(ontologyURI, instanceName, graphs);
+        kao.update(expected, graphs);
+        Person result = kao.retrieveInstance(ontologyURI, instanceName, graphs);
+        assertEquals(expected, result);
     }
 
     /**
@@ -132,12 +129,14 @@ public class AbstractKAOTest {
     @Test
     public void testRetrieveAllInstances() {
         System.out.println("retrieveAllInstances");
-        AbstractKAO instance = null;
-        List expResult = null;
-        List result = instance.retrieveAllInstances();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        List<Person> initial = kao.retrieveAllInstances(graphs);
+        Person p = kao.create(ontologyURI, instanceName, graphs);
+        for (URI context : graphs) {
+            initial.add(p);
+        }
+        List<Person> result = kao.retrieveAllInstances(graphs);
+        
+        assertEquals(initial.size(), result.size());
     }
 
     /**
@@ -146,13 +145,10 @@ public class AbstractKAOTest {
     @Test
     public void testUpdate() {
         System.out.println("update");
-        Object instance_2 = null;
-        AbstractKAO instance = null;
-        Object expResult = null;
-        Object result = instance.update(instance_2);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Person expected = kao.create(ontologyURI, instanceName, graphs);
+        expected.setFoafAge(22);
+        Person result = kao.update(expected, graphs);
+        assertEquals(expected, result);
     }
 
     /**
@@ -161,13 +157,10 @@ public class AbstractKAOTest {
     @Test
     public void testExecuteSPARQLquerySingleResult() {
         System.out.println("executeSPARQLquerySingleResult");
-        String query = "";
-        AbstractKAO instance = null;
-        Object expResult = null;
-        Object result = instance.executeSPARQLquerySingleResult(query);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Person expected = kao.create(ontologyURI, instanceName, graphs);
+        String query = "select ?s where {values ?s {<" + expected + ">} ?s a foaf:Person.}";
+        Person result = (Person) kao.executeSPARQLquerySingleResult(query);
+        assertEquals(expected, result);
     }
 
     /**
@@ -176,13 +169,23 @@ public class AbstractKAOTest {
     @Test
     public void testExecuteSPARQLqueryResultList() {
         System.out.println("executeSPARQLqueryResultList");
-        String query = "";
-        AbstractKAO instance = null;
-        List expResult = null;
-        List result = instance.executeSPARQLqueryResultList(query);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        String query = "select ?s where {?s a foaf:Person.}";
+        List<Person> expected = kao.executeSPARQLqueryResultList(query);
+        Person p1 = kao.create(ontologyURI, instanceName + "1", graphs);
+        Person p2 = kao.create(ontologyURI, instanceName + "2", graphs);
+
+        //An instance can be added in more than one context, therefore, it must be recorded for each context
+        if (graphs == null) {
+            expected.add(p1);
+            expected.add(p2);
+        } else {
+            for (URI context : graphs) {
+                expected.add(p1);
+                expected.add(p2);
+            }
+        }
+        List<Person> result = kao.executeSPARQLqueryResultList(query, graphs);
+        assertEquals(expected.size(), result.size());
     }
 
     /**
@@ -191,13 +194,21 @@ public class AbstractKAOTest {
     @Test
     public void testExecuteQueryAsIterator() {
         System.out.println("executeQueryAsIterator");
-        String query = "";
-        AbstractKAO instance = null;
-        Iterator<Object> expResult = null;
-        Iterator<Object> result = instance.executeQueryAsIterator(query);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        String query = "select ?s where {?s a foaf:Person.}";
+        List<Person> list_expected = new ArrayList<>(kao.executeSPARQLqueryResultList(query, graphs));
+
+        Person expected1 = kao.create(ontologyURI, instanceName + "1", graphs);
+        Person expected2 = kao.create(ontologyURI, instanceName + "2", graphs);
+        for (URI context : graphs) {
+            list_expected.add(expected1);
+            list_expected.add(expected2);
+        }
+
+        Iterator<Person> result_aux = kao.executeQueryAsIterator(query, graphs);
+        List<Person> result = Iterators.asList(result_aux);
+        assertEquals(list_expected.size(), result.size());
+        //assertArrayEquals(list_expected.toArray(), result.toArray());
+
     }
 
     /**
@@ -206,13 +217,10 @@ public class AbstractKAOTest {
     @Test
     public void testExecuteBooleanQuery() {
         System.out.println("executeBooleanQuery");
-        String query = "";
-        AbstractKAO instance = null;
-        boolean expResult = false;
-        boolean result = instance.executeBooleanQuery(query);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Person expected = kao.create(ontologyURI, instanceName, graphs);
+        String query = "ASK where {values ?s {<" + expected.toString() + ">} ?s a foaf:Person.}";
+        boolean result = kao.executeBooleanQuery(query);
+        assertTrue(result);
     }
 
     /**
@@ -221,10 +229,10 @@ public class AbstractKAOTest {
     @Test
     public void testSetClasse() {
         System.out.println("setClasse");
-        AbstractKAO instance = null;
-        instance.setClasse(null);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        Class expected = Agent.class;
+        kao.setClasse(expected);
+        Class result = kao.retrieveClass();
+        assertEquals(expected, result);
     }
 
     /**
@@ -233,52 +241,10 @@ public class AbstractKAOTest {
     @Test
     public void testRetrieveClass() {
         System.out.println("retrieveClass");
-        AbstractKAO instance = null;
-        Class expResult = null;
-        Class result = instance.retrieveClass();
+        Class expResult = Agent.class;
+        kao.setClasse(expResult);
+        Class result = kao.retrieveClass();
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of getContexts method, of class AbstractKAO.
-     */
-    @Test
-    public void testGetContexts() {
-        System.out.println("getContexts");
-        AbstractKAO instance = null;
-        List<URI> expResult = null;
-        List<URI> result = instance.getContexts();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of addContext method, of class AbstractKAO.
-     */
-    @Test
-    public void testAddContext() {
-        System.out.println("addContext");
-        URI context = null;
-        AbstractKAO instance = null;
-        instance.addContext(context);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
-    }
-
-    /**
-     * Test of setContexts method, of class AbstractKAO.
-     */
-    @Test
-    public void testSetContexts() {
-        System.out.println("setContexts");
-        List<URI> contexts = null;
-        AbstractKAO instance = null;
-        instance.setContexts(contexts);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
 
     public class AbstractKAOImpl extends AbstractKAO {

@@ -1,7 +1,5 @@
 package wwwc.nees.joint.module.kao;
 
-import java.util.Iterator;
-import java.util.List;
 import org.openrdf.model.Resource;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
@@ -16,57 +14,35 @@ public class RemoveOperations {
     /**
      * Removes the desired instance in the repository, passing the instance name
      *
+     * @param ontologyURI
      * @param instanceName a <code>String</code> with the instance name.
+     * @param connection an object representing the connection with the database
+     * @param contexts an array of URIs that represent the contexts where
+     * statements will be removed
+     * @throws org.openrdf.repository.RepositoryException
      */
-//    public void remove(String ontologyURI, String instanceName, RepositoryConnection connection)
-//            throws RepositoryException, Exception {
-//
-//        ValueFactory f = connection.getValueFactory();
-//
-//        // Creates the instance resource
-//        URI instance = f.createURI(ontologyURI + instanceName);
-//
-//        connection.remove(instance, null, null);
-//        connection.remove((Resource) null, null, instance);
-//
-//    }
-    public void remove(String ontologyURI, String instanceName, List<URI> contexts, RepositoryConnection connection)
+    public void remove(String ontologyURI, String instanceName, RepositoryConnection connection, URI... contexts)
             throws RepositoryException, Exception {
 
         ValueFactory f = connection.getValueFactory();
         // Creates the instance resource
         URI instance = f.createURI(ontologyURI + instanceName);
-        if (contexts.isEmpty()) {
-            connection.remove(instance, null, null);
-            connection.remove((Resource) null, null, instance);
-            return;
-        }
-        Iterator<URI> context = contexts.iterator();
-        while (context.hasNext()) {
-            URI c = context.next();
-            connection.remove(instance, null, null, c);
-            connection.remove((Resource) null, null, instance, c);
-        }
+        connection.remove(instance, null, null, contexts);
+        connection.remove((Resource) null, null, instance, contexts);
     }
 
     /**
      *
      * Removes the desired instance in the repository.
      *
+     * @param <T>
      * @param instance an <code>Object</code> representing the instance.
+     * @param connection an object representing the connection with the database
+     * @param contexts an array of URIs that represent the contexts where
+     * statements will be removed
+     * @throws org.openrdf.repository.RepositoryException
      */
-//    public <T> void remove(T instance, RepositoryConnection connection)
-//            throws RepositoryException, Exception {
-//
-//        ValueFactory f = connection.getValueFactory();
-//
-//        // Creates the instance resource
-//        URI instanceURI = f.createURI(instance.toString());
-//
-//        connection.remove(instanceURI.toString(), null, null);
-//        connection.remove((Resource) null, null, instanceURI.toString());
-//    }
-    public <T> void remove(T instance, List<URI> contexts, RepositoryConnection connection)
+    public <T> void remove(T instance, RepositoryConnection connection, URI... contexts)
             throws RepositoryException, Exception {
 
         ValueFactory f = connection.getValueFactory();
@@ -74,16 +50,7 @@ public class RemoveOperations {
         // Creates the instance resource
         URI instanceURI = f.createURI(instance.toString());
 
-        if (contexts.isEmpty()) {
-            connection.remove(instanceURI, null, null);
-            connection.remove((Resource) null, null, instanceURI);
-            return;
-        }
-        Iterator<URI> context = contexts.iterator();
-        while (context.hasNext()) {
-            URI c = context.next();
-            connection.remove(instanceURI, null, null, c);
-            connection.remove((Resource) null, null, instanceURI, c);
-        }
+        connection.remove(instanceURI, null, null, contexts);
+        connection.remove((Resource) null, null, instanceURI, contexts);
     }
 }

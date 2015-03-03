@@ -1,5 +1,6 @@
 package wwwc.nees.joint.module.kao;
 
+import info.aduna.iteration.Iterations;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,6 +18,7 @@ import org.openrdf.model.ValueFactory;
 import org.openrdf.model.vocabulary.RDF;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
+import org.openrdf.repository.RepositoryResult;
 import wwwc.nees.joint.compiler.annotations.Iri;
 import wwwc.nees.joint.model.JOINTResource;
 
@@ -34,11 +36,11 @@ public class LazyLoader {
     private static final String PREF_SETTER = "set";
     private static final String SUF_IMPL_CLASS = "Impl";
 
-    private DatatypeManager datatypeManager;
+    private final DatatypeManager datatypeManager;
     private RepositoryConnection connection;
     private ValueFactory f;
-    private Map<String, String> packages;
-    private GraphQueryConstruct graphQueryConstruct;
+    private final Map<String, String> packages;
+    private final GraphQueryConstruct graphQueryConstruct;
 
     public LazyLoader(RepositoryConnection con) {
         this.connection = con;
@@ -48,11 +50,14 @@ public class LazyLoader {
         this.graphQueryConstruct = new GraphQueryConstruct(con);
     }
 
-    public String getClassFromBase(String subj) throws Exception {
+    public String getClassFromBase(String subj, URI... contexts) throws Exception {
         ValueFactory f = connection.getValueFactory();
         URI sub = f.createURI(subj);
 
-        List<Statement> statements = graphQueryConstruct.getStatementsByGraphQuery(subj, RDF.TYPE.toString(), null);
+        RepositoryResult stts = this.connection.getStatements(sub, RDF.TYPE, null, true, contexts);
+        List<Statement> statements = Iterations.asList(stts);
+        stts.close();
+        //List<Statement> statements = graphQueryConstruct.getStatementsByGraphQuery(subj, RDF.TYPE.toString(), null);
 
         //Preparar a query para recuperar o tipo de instancia
         if (statements.size() > 0) {
@@ -140,7 +145,7 @@ public class LazyLoader {
         return mapProperties;
     }
 
-    public void lazyLoadObject(Object objectClassImpl, String className) {
+    public void lazyLoadObject(Object objectClassImpl, String className, URI... contexts) {
 
         try {
 
@@ -159,8 +164,10 @@ public class LazyLoader {
             Method[] allMethodsClassImpl = classImpl.getMethods();
 
             //retrieves all values of the properties of the instance
-            //List<Statement> statements = this.connection.getStatements(suj, null, null, true).asList(); //CHANGED BY getStatementsByGraphQuery
-            List<Statement> statements = graphQueryConstruct.getStatementsByGraphQuery(suj.toString(), null, null);
+            //List<Statement> statements = graphQueryConstruct.getStatementsByGraphQuery(suj.toString(), null, null);
+            RepositoryResult<Statement> stts = this.connection.getStatements(suj, null, null, true, contexts);
+            List<Statement> statements = Iterations.asList(stts);
+            stts.close();
 
             //creates a map to hold all values of the properties
             Map<String, List<Value>> mapProperties = this.sortPropertiesAndValues(statements);

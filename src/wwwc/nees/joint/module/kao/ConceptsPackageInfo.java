@@ -36,7 +36,7 @@ public class ConceptsPackageInfo {
         if (packages == null) {
 
             packages = new HashMap<String, String>();
-            InputStream st = classe.getResourceAsStream("/META-INF/org.openrdf.concepts");
+            InputStream st = classe.getResourceAsStream("/META-INF/org.openrdf.conceptsMapping");
             InputStreamReader reader = new InputStreamReader(st);
 
             BufferedReader red = new BufferedReader(reader);
@@ -44,9 +44,6 @@ public class ConceptsPackageInfo {
             try {
                 while (red.ready()) {
                     String pkgLine = red.readLine();
-                    if (!pkgLine.contains(" = ")) {
-                        continue;
-                    }
                     String key = pkgLine.substring(0, pkgLine.indexOf(" = "));
                     String value = pkgLine.substring(pkgLine.indexOf(" = ") + 3);
                     packages.put(key, value);

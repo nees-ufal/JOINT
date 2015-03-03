@@ -4,7 +4,6 @@ import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import wwwc.nees.joint.compiler.annotations.Iri;
@@ -12,7 +11,6 @@ import org.openrdf.model.Literal;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
-import org.openrdf.model.vocabulary.RDF;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
 import wwwc.nees.joint.model.JOINTResource;
@@ -58,7 +56,7 @@ public class UpdateOperations {
         return this.f.createLiteral(value);
     }
 
-    public Object updateDettachedInstance(Object instance, Class classe, List<URI> contexts, RepositoryConnection con) throws ClassNotFoundException,
+    public Object updateDettachedInstance(Object instance, Class classe, RepositoryConnection con, URI... contexts) throws ClassNotFoundException,
             InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, RepositoryException, NoSuchMethodException {
         this.connection = con;
         this.f = this.connection.getValueFactory();
@@ -88,8 +86,13 @@ public class UpdateOperations {
             URI pred = f.createURI(iri.value());
 
             //removes the info from this predicate
-            this.connection.remove(suj, pred, null);
-
+            if (contexts == null) {
+                this.connection.remove(suj, pred, null);
+            } else {
+                for (URI context : contexts) {
+                    this.connection.remove(suj, pred, null, context);
+                }
+            }
             Object returnOb = method.invoke(instance);
 
             if (returnOb == null) { //caso de nao ter nenhuma valor a propriedade
@@ -100,21 +103,26 @@ public class UpdateOperations {
             Class parameterClass = returnOb.getClass();
             String parameterClassName = parameterClass.getName();
             //contexts
-            Iterator<URI> context = contexts.iterator();
 
             if (!parameterClassName.equals("java.util.HashSet")) {// caso de ser uma propriedade functional
+
                 if (this.isDatatype(parameterClassName)) {
                     Literal litObj = this.convertDatatype(returnOb.toString(), parameterClassName);
-
-//                    updSts.add(f.createStatement(suj, pred, litObj));                    
-                    while (context.hasNext()) {
-                        updSts.add(f.createStatement(suj, pred, litObj, context.next()));
+                    if (contexts == null) {
+                        updSts.add(f.createStatement(suj, pred, litObj));
+                    } else {
+                        for (URI context : contexts) {
+                            updSts.add(f.createStatement(suj, pred, litObj, context));
+                        }
                     }
                 } else {
                     URI uriObj = f.createURI(returnOb.toString());
-//                   updSts.add(f.createStatement(suj, pred, uriObj));
-                    while (context.hasNext()) {
-                        updSts.add(f.createStatement(suj, pred, uriObj, context.next()));
+                    if (contexts == null) {
+                        updSts.add(f.createStatement(suj, pred, uriObj));
+                    } else {
+                        for (URI context : contexts) {
+                            updSts.add(f.createStatement(suj, pred, uriObj, context));
+                        }
                     }
 
                 }
@@ -127,32 +135,36 @@ public class UpdateOperations {
                     parameterClass = returnSet.iterator().next().getClass();
                     parameterClassName = parameterClass.getName();
                 }
+                //Create an iterator with all contexts 
                 if (this.isDatatype(parameterClassName)) {
                     //percorre a lista
                     for (Object ob : returnSet) {
 
                         Literal litObj = this.convertDatatype(ob.toString(), parameterClassName);
-//                        updSts.add(f.createStatement(suj, pred, litObj));
-                        while (context.hasNext()) {
-                            updSts.add(f.createStatement(suj, pred, litObj, context.next()));
+                        if (contexts == null) {
+                            updSts.add(f.createStatement(suj, pred, litObj));
+                        } else {
+                            for (URI context : contexts) {
+                                updSts.add(f.createStatement(suj, pred, litObj, context));
+                            }
                         }
                     }
                 } else {
                     //percorre a lista
                     for (Object ob : returnSet) {
                         URI uriObj = f.createURI(ob.toString());
-//                        updSts.add(f.createStatement(suj, pred, uriObj));
-                        while (context.hasNext()) {
-                            updSts.add(f.createStatement(suj, pred, uriObj, context.next()));
+                        if (contexts == null) {
+                            updSts.add(f.createStatement(suj, pred, uriObj));
+                        } else {
+                            for (URI context : contexts) {
+                                updSts.add(f.createStatement(suj, pred, uriObj, context));
+                            }
                         }
                     }
                 }
             }
         }
 
-//        for (Statement st : updSts) {
-//            System.out.println(st);
-//        }
         this.connection.add((Iterable) updSts);
 
         //erases inner modified fields

@@ -71,7 +71,7 @@ public class SPARQLQueryRunnerImpl implements QueryRunner {
      * @return object <code>Object</code> result.
      */
     @Override
-    public Object executeQueryAsSingleResult(String query, List<URI> contexts) {
+    public Object executeQueryAsSingleResult(String query, URI... contexts) {
         Object returnObject = null;
 
         TupleQuery tupleQuery;
@@ -194,7 +194,7 @@ public class SPARQLQueryRunnerImpl implements QueryRunner {
      * @return <code>List<Object></code> a java.util.List with the results.
      */
     @Override
-    public List<Object> executeQueryAsList(String query, List<URI> contexts) {
+    public List<Object> executeQueryAsList(String query, URI... contexts) {
 
         // Creates a java.util.List
         List<Object> resultList = new ArrayList<>();
@@ -376,7 +376,7 @@ public class SPARQLQueryRunnerImpl implements QueryRunner {
      * @return <code>Iterator<Object></code> a java.util.List with the results.
      */
     @Override
-    public Iterator<Object> executeQueryAsIterator(String query, List<URI> contexts) {
+    public Iterator<Object> executeQueryAsIterator(String query, URI... contexts) {
         // Creates a java.util.List
         List<Object> resultList = new ArrayList<>();
 

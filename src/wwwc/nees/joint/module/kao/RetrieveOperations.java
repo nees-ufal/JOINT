@@ -14,15 +14,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import wwwc.nees.joint.compiler.annotations.Iri;
 import org.openrdf.model.Literal;
-import org.openrdf.model.Resource;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
 import org.openrdf.model.Value;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.vocabulary.RDF;
-import org.openrdf.query.GraphQuery;
-import org.openrdf.query.GraphQueryResult;
-import org.openrdf.query.QueryLanguage;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryResult;
 import wwwc.nees.joint.model.JOINTResource;
@@ -71,7 +67,7 @@ public class RetrieveOperations {
      * @throws java.lang.Exception any exception
      */
     public <T> T retrieveInstance(String ontologyURI, String instanceName, Class<T> clazz,
-            List<URI> contexts, RepositoryConnection connection) throws Exception {
+            RepositoryConnection connection, URI... contexts) throws Exception {
         this.connection = connection;
         this.f = this.connection.getValueFactory();
         return (T) this.convertOriginalForImpl(ontologyURI + instanceName, clazz, contexts);
@@ -86,21 +82,18 @@ public class RetrieveOperations {
      * @return a <code>List</code> with the instances.
      * @throws java.lang.Exception any exception
      */
-    public <T> List<T> retrieveAllInstances(Class<T> clazz, List<URI> contexts,
-            RepositoryConnection connection) throws Exception {
+    public <T> List<T> retrieveAllInstances(Class<T> clazz,
+            RepositoryConnection connection, URI... contexts) throws Exception {
 
         this.connection = connection;
         this.f = this.connection.getValueFactory();
 
         // Creates a new java.util.List
         List<T> listInstances = new ArrayList<>();
-        List<Statement> statements;
-        if (contexts.isEmpty()) {
-            statements = graphQueryConstruct.getStatementsByGraphQuery(null, RDF.TYPE.toString(), this.f.createURI(((Iri) clazz.getAnnotation(Iri.class)).value()).toString());
-        } else {
-            statements = graphQueryConstruct.getStatementsByGraphQuery_withContext(null, RDF.TYPE.toString(), this.f.createURI(((Iri) clazz.getAnnotation(Iri.class)).value()).toString(), contexts);
-        }
-
+        RepositoryResult<Statement> stts = this.connection.getStatements(null, RDF.TYPE, this.f.createURI(((Iri) clazz.getAnnotation(Iri.class)).value()), true, contexts);
+//        statements = graphQueryConstruct.getStatementsByGraphQuery_withContext(null, RDF.TYPE.toString(), this.f.createURI(((Iri) clazz.getAnnotation(Iri.class)).value()).toString(), contexts);
+        List<Statement> statements = Iterations.asList(stts);
+        stts.close();
         if (!statements.isEmpty()) {
             List<String> instancesName = new ArrayList<>();
 
@@ -115,19 +108,18 @@ public class RetrieveOperations {
         return listInstances;
     }
 
-    public String getClassFromBase(String subj, List<URI> contexts) throws Exception {
+    public String getClassFromBase(String subj, URI... contexts) throws Exception {
         ValueFactory f = connection.getValueFactory();
         URI sub = f.createURI(subj);
-        //List<Statement> statements = graphQueryConstruct.getStatementsByGraphQuery(subj, RDF.TYPE.toString(), null, context);
-        RepositoryResult<Statement> sts = this.connection.getStatements(sub, RDF.TYPE, null, true, (Resource[]) contexts.toArray()
-        );
-        List<Statement> statements = Iterations.addAll(sts, new ArrayList<Statement>());
+
+//        List<Statement> statements = graphQueryConstruct.getStatementsByGraphQuery_withContext(subj, RDF.TYPE.toString(), null, contexts);
+        RepositoryResult<Statement> stts = this.connection.getStatements(sub, RDF.TYPE, null, true, contexts);
+        List<Statement> statements = Iterations.asList(stts);
+        stts.close();
         //Preparar a query para recuperar o tipo de instancia
-        if (statements.size() > 0) {
+        if (!statements.isEmpty()) {
             Statement st = statements.get(0);
-
             statements = null;
-
             String uriObj = st.getObject().stringValue();
             String nameClasse = this.packages.get(uriObj);
             if (nameClasse == null) {
@@ -194,16 +186,11 @@ public class RetrieveOperations {
         return mapProperties;
     }
 
-    public Object convertOriginalForImpl(String instanceName, Class clazz, List<URI> contexts) throws Exception {
+    public Object convertOriginalForImpl(String instanceName, Class clazz, URI... contexts) throws Exception {
 
         URI suj = f.createURI(instanceName);
         //checks if this instance is in the triple store
-        boolean objectNull;
-        if (contexts.isEmpty()) {
-            objectNull = this.connection.hasStatement(suj, null, null, true);
-        } else {
-            objectNull = this.graphQueryConstruct.hasStatementsByGraphQuery_withContext(instanceName, null, null, contexts);
-        }
+        boolean objectNull = this.connection.hasStatement(suj, null, null, true, contexts);
 
         if (!objectNull) {
             return null;
@@ -228,13 +215,12 @@ public class RetrieveOperations {
         Method[] allMethodsClassImpl = classImpl.getMethods();
 
         //retrieves all values of the properties of the instance
-        //List<Statement> statements = graphQueryConstruct.getStatementsByGraphQuery(suj.toString(), null, null, context);
-        List<Statement> statements = graphQueryConstruct.getStatementsByGraphQuery_withContext(suj.toString(), null, null, contexts);
-
+//        List<Statement> statements = graphQueryConstruct.getStatementsByGraphQuery_withContext(suj.toString(), null, null, contexts);
+        RepositoryResult<Statement> stts = this.connection.getStatements(suj, null, null, true, contexts);
+        List<Statement> statements = Iterations.asList(stts);
+        stts.close();
         //creates a map to hold all values of the properties
         Map<String, List<Value>> mapProperties = this.sortPropertiesAndValues(statements);
-
-        statements = null;
 
         //for each method, searches for the setter ones
         for (Method method : allMethodsClassImpl) {
@@ -327,7 +313,7 @@ public class RetrieveOperations {
         return obj;
     }
 
-    public List<Object> convertCollectionOriginalForImpl(List<String> instancesName, Class clazz, List<URI> contexts) throws Exception {
+    public List<Object> convertCollectionOriginalForImpl(List<String> instancesName, Class clazz, URI... contexts) throws Exception {
 
         List<Object> returnList = new ArrayList<>();
 
@@ -350,26 +336,12 @@ public class RetrieveOperations {
 
         //constructs a query to get all information about the objects that will
         //be parsed
-//        StringBuilder query = new StringBuilder();
-//        query.append("CONSTRUCT { ?s ?p ?o }\n WHERE {\n values ?s {\n");
-//        for (String instanceURI : instancesName) {
-//            query.append("<");
-//            query.append(instanceURI);
-//            query.append("> \n");
-//        }
-//        query.append("}\n ?s ?p ?o \n }");
-//
-//        //evaluate the graph result
-//        GraphQuery prepareGraphQuery = this.connection.prepareGraphQuery(QueryLanguage.SPARQL, query.toString());
-//        GraphQueryResult graphResult = prepareGraphQuery.evaluate();
         Iterator<Statement> stts = graphQueryConstruct.getStatementsByGraphQuery_withContext(instancesName, null, null, contexts).iterator();
         //creates a map with key - uri/object - list of statements
         Map<String, List<Statement>> cInformation = new HashMap<>();
         //iterates the previous graph result
-        //while (graphResult.hasNext()) {
         while (stts.hasNext()) {
             //gets the statement
-            //Statement st = graphResult.next();
             Statement st = stts.next();
 
             //gets the uri key

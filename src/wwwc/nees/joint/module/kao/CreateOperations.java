@@ -2,8 +2,6 @@ package wwwc.nees.joint.module.kao;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Iterator;
-import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -32,7 +30,7 @@ public class CreateOperations {
      * @param ontologyURI a <code>String</code> with the instance name.
      * @return T the new instance.
      */
-    public <T> T create(String ontologyURI, String instanceName, Class<T> clazz, List<URI> contexts, RepositoryConnection connection)
+    public <T> T create(String ontologyURI, String instanceName, Class<T> clazz, RepositoryConnection connection, URI... contexts)
             throws ClassNotFoundException, RepositoryException, NoSuchMethodException,
             IllegalAccessException, IllegalArgumentException, InvocationTargetException, InstantiationException {
         Object ob = null;
@@ -54,11 +52,7 @@ public class CreateOperations {
             URI obj = f.createURI(classIri);
 
             //adds the designation
-            //connection.add(subj, RDF.TYPE, obj);
-            Iterator<URI> it = contexts.iterator();
-            while (it.hasNext()) {
-                connection.add(subj, RDF.TYPE, obj, it.next());
-            }
+            connection.add(subj, RDF.TYPE, obj, contexts);
 
             setURI.invoke(ob, ontologyURI + instanceName);
 
@@ -78,7 +72,7 @@ public class CreateOperations {
      * @param ontologyURI a <code>String</code> with the instance name.
      * @return T the new instance.
      */
-    public <T> T createWithUniqueID(String ontologyURI, String instancePrefix, Class<T> clazz, List<URI> contexts, RepositoryConnection connection)
+    public <T> T createWithUniqueID(String ontologyURI, String instancePrefix, Class<T> clazz, RepositoryConnection connection, URI... contexts)
             throws ClassNotFoundException, RepositoryException, NoSuchMethodException,
             IllegalAccessException, IllegalArgumentException, InvocationTargetException, InstantiationException {
         // Creates an object with the URI and the .class
@@ -102,14 +96,11 @@ public class CreateOperations {
 
             //creates the subject and the object
             URI subj = f.createURI(ontologyURI + instancePrefix + id);
-            URI obj = f.createURI(((Iri) classImpl.getAnnotation(Iri.class)).value());
+            //URI obj = f.createURI(((Iri) classImpl.getAnnotation(Iri.class)).value());
+            URI obj = f.createURI(classIri);
 
             //adds the designation
-//            connection.add(subj, RDF.TYPE, obj);            
-            Iterator<URI> it = contexts.iterator();
-            while (it.hasNext()) {
-                connection.add(subj, RDF.TYPE, obj, it.next());
-            }
+            connection.add(subj, RDF.TYPE, obj, contexts);
 
             Method met = classImpl.getMethod("setURI", String.class);
             met.invoke(ob, ontologyURI + instancePrefix + id);
