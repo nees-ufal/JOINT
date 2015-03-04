@@ -31,17 +31,17 @@ public class AbstractKAOTest {
         foafGraph_A = new URIImpl(ontologyURI + "A/");
         foafGraph_B = new URIImpl(ontologyURI + "B/");
         graphs = new URI[]{new URIImpl(ontologyURI + "A/"), new URIImpl(ontologyURI + "B/")};
-//        graphs = new URI[]{null};
+//        graphs = new URI[]{};
         kao = new AbstractKAOImpl(Person.class);
 
-        instanceName = "Maria";
+        instanceName = "Tereza";
     }
 
     @After
     public void tearDown() {
         kao.executeBooleanQuery("clear graph <" + foafGraph_A.toString() + ">");
         kao.executeBooleanQuery("clear graph <" + foafGraph_B.toString() + ">");
-//        kao.executeBooleanQuery("clear graph <sesame:nil>");
+        kao.executeBooleanQuery("clear graph <sesame:nil>");
         kao = null;
         ontologyURI = "";
         foafGraph_A = null;
@@ -72,7 +72,7 @@ public class AbstractKAOTest {
         List<Person> expected = kao.retrieveAllInstances(graphs);
         Person p1 = kao.createWithUniqueID(ontologyURI, instancePrefix, graphs);
         Person p2 = kao.createWithUniqueID(ontologyURI, instancePrefix, graphs);
-        if (graphs == null) {
+        if (graphs.length == 0) {
             expected.add(p1);
             expected.add(p2);
         } else {
@@ -131,11 +131,15 @@ public class AbstractKAOTest {
         System.out.println("retrieveAllInstances");
         List<Person> initial = kao.retrieveAllInstances(graphs);
         Person p = kao.create(ontologyURI, instanceName, graphs);
-        for (URI context : graphs) {
+        if (graphs.length == 0) {
             initial.add(p);
+        } else {
+            for (URI context : graphs) {
+                initial.add(p);
+            }
         }
         List<Person> result = kao.retrieveAllInstances(graphs);
-        
+
         assertEquals(initial.size(), result.size());
     }
 
@@ -145,9 +149,10 @@ public class AbstractKAOTest {
     @Test
     public void testUpdate() {
         System.out.println("update");
-        Person expected = kao.create(ontologyURI, instanceName, graphs);
+        Person expected = kao.create(ontologyURI, instanceName);
+
         expected.setFoafAge(22);
-        Person result = kao.update(expected, graphs);
+        Person result = kao.update(expected);
         assertEquals(expected, result);
     }
 
@@ -175,7 +180,7 @@ public class AbstractKAOTest {
         Person p2 = kao.create(ontologyURI, instanceName + "2", graphs);
 
         //An instance can be added in more than one context, therefore, it must be recorded for each context
-        if (graphs == null) {
+        if (graphs.length == 0) {
             expected.add(p1);
             expected.add(p2);
         } else {
@@ -199,6 +204,10 @@ public class AbstractKAOTest {
 
         Person expected1 = kao.create(ontologyURI, instanceName + "1", graphs);
         Person expected2 = kao.create(ontologyURI, instanceName + "2", graphs);
+        if (graphs.length == 0) {
+            list_expected.add(expected1);
+            list_expected.add(expected2);
+        }
         for (URI context : graphs) {
             list_expected.add(expected1);
             list_expected.add(expected2);

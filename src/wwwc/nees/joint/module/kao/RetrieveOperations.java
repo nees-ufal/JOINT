@@ -91,7 +91,6 @@ public class RetrieveOperations {
         // Creates a new java.util.List
         List<T> listInstances = new ArrayList<>();
         RepositoryResult<Statement> stts = this.connection.getStatements(null, RDF.TYPE, this.f.createURI(((Iri) clazz.getAnnotation(Iri.class)).value()), true, contexts);
-//        statements = graphQueryConstruct.getStatementsByGraphQuery_withContext(null, RDF.TYPE.toString(), this.f.createURI(((Iri) clazz.getAnnotation(Iri.class)).value()).toString(), contexts);
         List<Statement> statements = Iterations.asList(stts);
         stts.close();
         if (!statements.isEmpty()) {
@@ -112,7 +111,6 @@ public class RetrieveOperations {
         ValueFactory f = connection.getValueFactory();
         URI sub = f.createURI(subj);
 
-//        List<Statement> statements = graphQueryConstruct.getStatementsByGraphQuery_withContext(subj, RDF.TYPE.toString(), null, contexts);
         RepositoryResult<Statement> stts = this.connection.getStatements(sub, RDF.TYPE, null, true, contexts);
         List<Statement> statements = Iterations.asList(stts);
         stts.close();
@@ -215,7 +213,6 @@ public class RetrieveOperations {
         Method[] allMethodsClassImpl = classImpl.getMethods();
 
         //retrieves all values of the properties of the instance
-//        List<Statement> statements = graphQueryConstruct.getStatementsByGraphQuery_withContext(suj.toString(), null, null, contexts);
         RepositoryResult<Statement> stts = this.connection.getStatements(suj, null, null, true, contexts);
         List<Statement> statements = Iterations.asList(stts);
         stts.close();
@@ -337,13 +334,13 @@ public class RetrieveOperations {
         //constructs a query to get all information about the objects that will
         //be parsed
         Iterator<Statement> stts = graphQueryConstruct.getStatementsByGraphQuery_withContext(instancesName, null, null, contexts).iterator();
+
         //creates a map with key - uri/object - list of statements
         Map<String, List<Statement>> cInformation = new HashMap<>();
         //iterates the previous graph result
         while (stts.hasNext()) {
             //gets the statement
             Statement st = stts.next();
-
             //gets the uri key
             String uri = st.getSubject().stringValue();
 
@@ -360,8 +357,7 @@ public class RetrieveOperations {
                 cInformation.get(uri).add(st);
             }
         }
-
-        //graphResult.close();
+        
         for (String instanceURI : instancesName) {
 
             //creates an instance with the concrete class
@@ -374,7 +370,6 @@ public class RetrieveOperations {
 
             //recupera os objects de todas as propriedades
             List<Statement> statements = cInformation.get(instanceURI);
-
             //creates a map to hold all values of the properties
             Map<String, List<Value>> mapProperties = this.sortPropertiesAndValues(statements);
 

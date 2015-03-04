@@ -86,13 +86,8 @@ public class UpdateOperations {
             URI pred = f.createURI(iri.value());
 
             //removes the info from this predicate
-            if (contexts == null) {
-                this.connection.remove(suj, pred, null);
-            } else {
-                for (URI context : contexts) {
-                    this.connection.remove(suj, pred, null, context);
-                }
-            }
+            this.connection.remove(suj, pred, null, contexts);
+
             Object returnOb = method.invoke(instance);
 
             if (returnOb == null) { //caso de nao ter nenhuma valor a propriedade
@@ -108,7 +103,7 @@ public class UpdateOperations {
 
                 if (this.isDatatype(parameterClassName)) {
                     Literal litObj = this.convertDatatype(returnOb.toString(), parameterClassName);
-                    if (contexts == null) {
+                    if (contexts.length == 0) {
                         updSts.add(f.createStatement(suj, pred, litObj));
                     } else {
                         for (URI context : contexts) {
@@ -117,7 +112,7 @@ public class UpdateOperations {
                     }
                 } else {
                     URI uriObj = f.createURI(returnOb.toString());
-                    if (contexts == null) {
+                    if (contexts.length == 0) {
                         updSts.add(f.createStatement(suj, pred, uriObj));
                     } else {
                         for (URI context : contexts) {
@@ -141,7 +136,7 @@ public class UpdateOperations {
                     for (Object ob : returnSet) {
 
                         Literal litObj = this.convertDatatype(ob.toString(), parameterClassName);
-                        if (contexts == null) {
+                        if (contexts.length == 0) {
                             updSts.add(f.createStatement(suj, pred, litObj));
                         } else {
                             for (URI context : contexts) {
@@ -153,7 +148,7 @@ public class UpdateOperations {
                     //percorre a lista
                     for (Object ob : returnSet) {
                         URI uriObj = f.createURI(ob.toString());
-                        if (contexts == null) {
+                        if (contexts.length == 0) {
                             updSts.add(f.createStatement(suj, pred, uriObj));
                         } else {
                             for (URI context : contexts) {

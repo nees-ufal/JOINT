@@ -28,7 +28,16 @@ public abstract class AbstractKAO {
     private Class<?> classe;
     // Interface to perform queries in the repository
     private QueryRunner queryRunner;
-    // URI of graph to sabe tiples
+    // URI[] of graph to save triples
+    private URI[] contexts;
+
+    public URI[] getContexts() {
+        return contexts;
+    }
+
+    public void setContexts(URI[] contexts) {
+        this.contexts = (contexts == null) ? new URI[]{} : contexts;
+    }
 
     // CONSTRUCTOR
     // -------------------------------------------------------------------------
@@ -54,7 +63,7 @@ public abstract class AbstractKAO {
 //        }
         // Creates a QueryRunner with SPARQL implementation
         this.queryRunner = new SPARQLQueryRunnerImpl(this.repository);
-
+        this.contexts = new URI[]{};
     }
 
     // METHODS
@@ -67,7 +76,7 @@ public abstract class AbstractKAO {
      * @return T the new instance.
      */
     public <T> T create(String ontologyURI, String instanceName, URI... contexts) {
-
+        setContexts(contexts);
         CreateOperations createOpe = new CreateOperations();
 
         Object ob = null;
@@ -75,7 +84,8 @@ public abstract class AbstractKAO {
             con = this.repository.getConnection();
             try {
                 con.setAutoCommit(false);
-                ob = createOpe.create(ontologyURI, instanceName, this.classe, con, contexts);
+
+                ob = createOpe.create(ontologyURI, instanceName, this.classe, con, this.getContexts());
                 con.commit();
 
             } catch (Exception e) {
@@ -101,7 +111,7 @@ public abstract class AbstractKAO {
      * @return T the new instance.
      */
     public <T> T createWithUniqueID(String ontologyURI, String instancePrefix, URI... contexts) {
-
+        setContexts(contexts);
         CreateOperations createOpe = new CreateOperations();
 
         Object ob = null;
@@ -109,7 +119,7 @@ public abstract class AbstractKAO {
             con = this.repository.getConnection();
             try {
                 con.setAutoCommit(false);
-                ob = createOpe.createWithUniqueID(ontologyURI, instancePrefix, this.classe, con, contexts);
+                ob = createOpe.createWithUniqueID(ontologyURI, instancePrefix, this.classe, con, this.getContexts());
                 con.commit();
 
             } catch (Exception e) {
@@ -132,7 +142,7 @@ public abstract class AbstractKAO {
      * @param instanceName a <code>String</code> with the instance name.
      */
     public void delete(String ontologyURI, String instanceName, URI... contexts) {
-
+        setContexts(contexts);
         RemoveOperations removeOpe = new RemoveOperations();
         try {
             con = this.repository.getConnection();
@@ -142,7 +152,7 @@ public abstract class AbstractKAO {
                 con.setAutoCommit(false);
 
 //                removeOpe.remove(ontologyURI, instanceName, con);
-                removeOpe.remove(ontologyURI, instanceName, con, contexts);
+                removeOpe.remove(ontologyURI, instanceName, con, this.getContexts());
                 // Saves the object in the repository
                 con.commit();
             } catch (Exception e) {
@@ -164,6 +174,7 @@ public abstract class AbstractKAO {
      * @param instanceName a <code>String</code> with the instance name.
      */
     public <T> void delete(T instance, URI... contexts) {
+        setContexts(contexts);
         RemoveOperations removeOpe = new RemoveOperations();
         try {
 //            RepositoryConnection conn = this.repository.getConnection();
@@ -172,7 +183,7 @@ public abstract class AbstractKAO {
             try {
                 //gets connection
                 con.setAutoCommit(false);
-                removeOpe.remove(instance, con, contexts);
+                removeOpe.remove(instance, con, this.getContexts());
                 // Saves the object in the repository
                 con.commit();
 
@@ -197,7 +208,7 @@ public abstract class AbstractKAO {
      * @return T the desired instance.
      */
     public <T> T retrieveInstance(String ontologyURI, String instanceName, URI... contexts) {
-
+        setContexts(contexts);
         Object ob = null;
 
         try {
@@ -208,7 +219,7 @@ public abstract class AbstractKAO {
                 //gets connection
                 con.setAutoCommit(false);
 
-                ob = retrieveOpe.retrieveInstance(ontologyURI, instanceName, classe, con, contexts);
+                ob = retrieveOpe.retrieveInstance(ontologyURI, instanceName, classe, con, this.getContexts());
 
                 // Saves the object in the repository
                 con.commit();
@@ -232,19 +243,18 @@ public abstract class AbstractKAO {
      * @return <code>List<T></code> a List with the instances.
      */
     public <T> List<T> retrieveAllInstances(URI... contexts) {
-
+        setContexts(contexts);
         // Creates a new java.util.List
         List<T> listInstances = new ArrayList<>();
 
         try {
-//            RepositoryConnection conn = this.repository.getConnection();
             con = this.repository.getConnection();
             RetrieveOperations retrieveOpe = new RetrieveOperations(con);
             try {
                 //gets connection
                 con.setAutoCommit(false);
 
-                listInstances = (List<T>) retrieveOpe.retrieveAllInstances(classe, con, contexts);
+                listInstances = (List<T>) retrieveOpe.retrieveAllInstances(classe, con, this.getContexts());
 
                 // Saves the object in the repository
                 con.commit();
@@ -269,17 +279,17 @@ public abstract class AbstractKAO {
      *
      */
     public <T> T update(T instance, URI... contexts) {
+        setContexts(contexts);
         Object ob = null;
         UpdateOperations updateOpe = new UpdateOperations();
 
         try {
-//            RepositoryConnection conn = this.repository.getConnection();
             con = this.repository.getConnection();
             try {
                 //gets connection
                 con.setAutoCommit(false);
 
-                ob = updateOpe.updateDettachedInstance(instance, classe, con, contexts);
+                ob = updateOpe.updateDettachedInstance(instance, classe, con, this.getContexts());
 
                 // Saves the object in the repository
                 con.commit();
@@ -317,7 +327,8 @@ public abstract class AbstractKAO {
      * @return <code>List<Object></code> a java.util.List with the results.
      */
     public List executeSPARQLqueryResultList(String query, URI... contexts) {
-        return this.queryRunner.executeQueryAsList(query, contexts);
+        setContexts(contexts);
+        return this.queryRunner.executeQueryAsList(query, this.getContexts());
     }
 
     /**
@@ -329,7 +340,8 @@ public abstract class AbstractKAO {
      * @return <code>Iterator<Object></code> a java.util.List with the results.
      */
     public Iterator executeQueryAsIterator(String query, URI... contexts) {
-        return this.queryRunner.executeQueryAsIterator(query,contexts);
+        setContexts(contexts);
+        return this.queryRunner.executeQueryAsIterator(query, this.getContexts());
     }
 
     /**
