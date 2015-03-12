@@ -30,8 +30,7 @@ public class AbstractKAOTest {
         ontologyURI = "http://xmlns.com/foaf/0.1/";
         foafGraph_A = new URIImpl(ontologyURI + "A/");
         foafGraph_B = new URIImpl(ontologyURI + "B/");
-        graphs = new URI[]{new URIImpl(ontologyURI + "A/"), new URIImpl(ontologyURI + "B/")};
-//        graphs = new URI[]{};
+        graphs = new URI[]{foafGraph_A, foafGraph_B};
         kao = new AbstractKAOImpl(Person.class);
 
         instanceName = "Tereza";
@@ -41,7 +40,7 @@ public class AbstractKAOTest {
     public void tearDown() {
         kao.executeBooleanQuery("clear graph <" + foafGraph_A.toString() + ">");
         kao.executeBooleanQuery("clear graph <" + foafGraph_B.toString() + ">");
-        kao.executeBooleanQuery("clear graph <sesame:nil>");
+//        kao.executeBooleanQuery("clear graph <sesame:nil>");
         kao = null;
         ontologyURI = "";
         foafGraph_A = null;
@@ -230,6 +229,29 @@ public class AbstractKAOTest {
         String query = "ASK where {values ?s {<" + expected.toString() + ">} ?s a foaf:Person.}";
         boolean result = kao.executeBooleanQuery(query);
         assertTrue(result);
+    }
+
+    /**
+     * Test of executeSPARQLUpdateQuery method, of class AbstractKAO.
+     */
+    @Test
+    public void testExecuteSPARQLUpdateQuery() {
+        System.out.println("executeSPARQLUpdateQuery");
+        Person expected = kao.create(ontologyURI, instanceName, graphs);
+        expected.setFoafAge(30);
+        kao.update(expected, graphs);
+
+        String exp_gender = (String) expected.getFoafGender();
+        String query = "INSERT { GRAPH ?g1 {?s foaf:gender \"Masculino\"}} \n"
+                + "WHERE { GRAPH ?g {values ?s {<" + expected.toString() + ">} ?s a foaf:Person; foaf:age ?age.}\n"
+                + "BIND(?g as ?g1)}";
+        boolean result = kao.executeUpdateQuery(query);
+        Person res_person = kao.retrieveInstance(ontologyURI, instanceName, graphs);
+        String res_gender = (String) res_person.getFoafGender();
+        assertTrue(result);
+        System.out.println(exp_gender);
+        System.out.println(res_gender);
+        assertNotSame(exp_gender, res_gender);
     }
 
     /**

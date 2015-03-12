@@ -336,6 +336,8 @@ public abstract class AbstractKAO {
      * the results.
      *
      * @param query the <code>String</code> with the query to be performed.
+     * @param contexts <code>URI</code> represents the graphs that will be
+     * queried
      *
      * @return <code>Iterator<Object></code> a java.util.List with the results.
      */
@@ -354,6 +356,17 @@ public abstract class AbstractKAO {
      */
     public boolean executeBooleanQuery(String query) {
         return this.queryRunner.executeBooleanQuery(query);
+    }
+
+    /**
+     * Performs SPARQL update queries in the repository, returning a boolean
+     * true if the query was performed with successful or false otherwise.
+     *
+     * @param query the <code>String</code> with the query to be performed.
+     * @return <code>boolean</code> true or false.
+     */
+    public boolean executeUpdateQuery(String query) {
+        return this.queryRunner.executeUpdateQuery(query);
     }
 
     /**

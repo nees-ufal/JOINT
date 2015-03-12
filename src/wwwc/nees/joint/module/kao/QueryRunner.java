@@ -52,4 +52,14 @@ public interface QueryRunner {
      * @return <code>boolean<Object></code> true or false.
      */
     boolean executeBooleanQuery(String query);
+
+    /**
+     * Performs SPARQL update queries in the repository, returning a boolean
+     * true if the query was performed with successful or false otherwise.
+     *
+     * @param query the <code>String</code> with the query to be performed.
+     * @return <code>boolean</code> true or false.
+     */
+    public boolean executeUpdateQuery(String query);
+
 }
