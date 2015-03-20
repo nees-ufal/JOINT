@@ -13,6 +13,7 @@ import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
+import org.openrdf.repository.RepositoryResult;
 import wwwc.nees.joint.model.JOINTResource;
 
 /**
@@ -27,7 +28,7 @@ public class UpdateOperations {
     private final String INTEGER = "java.lang.Integer";
     private final String FLOAT = "java.lang.Float";
     private final String DATE = "com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl";
-    private RepositoryConnection connection;
+//    private RepositoryConnection connection;
     private ValueFactory f;
 
     public boolean isDatatype(String className) {
@@ -56,10 +57,10 @@ public class UpdateOperations {
         return this.f.createLiteral(value);
     }
 
-    public Object updateDettachedInstance(Object instance, Class classe, RepositoryConnection con, URI... contexts) throws ClassNotFoundException,
-            InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, RepositoryException, NoSuchMethodException {
-        this.connection = con;
-        this.f = this.connection.getValueFactory();
+    public Object updateDettachedInstance(Object instance, Class classe, RepositoryConnection connection, URI... contexts) throws ClassNotFoundException,
+            InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, RepositoryException, NoSuchMethodException, Exception {
+//        this.connection = con;
+        this.f = connection.getValueFactory();
 
         URI suj = f.createURI(instance.toString());
 
@@ -70,7 +71,7 @@ public class UpdateOperations {
 
         //retrieves all methods which were modified
         List<String> modifiedMethods = ((JOINTResource) instance).getInnerModifiedFields();
-
+        System.out.println(modifiedMethods);
         List<String> auxModifiedMethods = new ArrayList(modifiedMethods);
 
         //for over these modified methods
@@ -85,8 +86,13 @@ public class UpdateOperations {
             Iri iri = method.getAnnotation(Iri.class);
             URI pred = f.createURI(iri.value());
 
-            //removes the info from this predicate
-            this.connection.remove(suj, pred, null, contexts);
+            //retrieves and removes the info from this predicate
+            RemoveOperations removeOp = new RemoveOperations();
+            RepositoryResult<Statement> statements = connection.getStatements(suj, pred, null, true, contexts);
+            while (statements.hasNext()) {
+                Statement statement = statements.next();
+                removeOp.removeStatements(connection, statement.getSubject().stringValue(), statement.getPredicate().stringValue(), statement.getObject().stringValue(), statement.getContext().stringValue());
+            }
 
             Object returnOb = method.invoke(instance);
 
@@ -97,29 +103,15 @@ public class UpdateOperations {
             //pega o parametro da propriedade
             Class parameterClass = returnOb.getClass();
             String parameterClassName = parameterClass.getName();
-            //contexts
 
             if (!parameterClassName.equals("java.util.HashSet")) {// caso de ser uma propriedade functional
 
                 if (this.isDatatype(parameterClassName)) {
                     Literal litObj = this.convertDatatype(returnOb.toString(), parameterClassName);
-                    if (contexts.length == 0) {
-                        updSts.add(f.createStatement(suj, pred, litObj));
-                    } else {
-                        for (URI context : contexts) {
-                            updSts.add(f.createStatement(suj, pred, litObj, context));
-                        }
-                    }
+                    updSts.add(f.createStatement(suj, pred, litObj));
                 } else {
                     URI uriObj = f.createURI(returnOb.toString());
-                    if (contexts.length == 0) {
-                        updSts.add(f.createStatement(suj, pred, uriObj));
-                    } else {
-                        for (URI context : contexts) {
-                            updSts.add(f.createStatement(suj, pred, uriObj, context));
-                        }
-                    }
-
+                    updSts.add(f.createStatement(suj, pred, uriObj));
                 }
             } else { // caso de ser multi valorado
 
@@ -130,37 +122,27 @@ public class UpdateOperations {
                     parameterClass = returnSet.iterator().next().getClass();
                     parameterClassName = parameterClass.getName();
                 }
-                //Create an iterator with all contexts 
                 if (this.isDatatype(parameterClassName)) {
                     //percorre a lista
                     for (Object ob : returnSet) {
 
                         Literal litObj = this.convertDatatype(ob.toString(), parameterClassName);
-                        if (contexts.length == 0) {
-                            updSts.add(f.createStatement(suj, pred, litObj));
-                        } else {
-                            for (URI context : contexts) {
-                                updSts.add(f.createStatement(suj, pred, litObj, context));
-                            }
-                        }
+
+                        updSts.add(f.createStatement(suj, pred, litObj));
                     }
                 } else {
                     //percorre a lista
                     for (Object ob : returnSet) {
                         URI uriObj = f.createURI(ob.toString());
-                        if (contexts.length == 0) {
-                            updSts.add(f.createStatement(suj, pred, uriObj));
-                        } else {
-                            for (URI context : contexts) {
-                                updSts.add(f.createStatement(suj, pred, uriObj, context));
-                            }
-                        }
+
+                        updSts.add(f.createStatement(suj, pred, uriObj));
+
                     }
                 }
             }
         }
 
-        this.connection.add((Iterable) updSts);
+        connection.add((Iterable) updSts, contexts);
 
         //erases inner modified fields
         ((JOINTResource) instance).setInnerModifiedFields(new ArrayList<String>());

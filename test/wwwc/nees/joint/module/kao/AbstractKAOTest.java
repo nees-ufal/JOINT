@@ -38,8 +38,8 @@ public class AbstractKAOTest {
 
     @After
     public void tearDown() {
-        kao.executeBooleanQuery("clear graph <" + foafGraph_A.toString() + ">");
-        kao.executeBooleanQuery("clear graph <" + foafGraph_B.toString() + ">");
+//        kao.executeBooleanQuery("clear graph <" + foafGraph_A.toString() + ">");
+//        kao.executeBooleanQuery("clear graph <" + foafGraph_B.toString() + ">");
 //        kao.executeBooleanQuery("clear graph <sesame:nil>");
         kao = null;
         ontologyURI = "";
@@ -148,11 +148,17 @@ public class AbstractKAOTest {
     @Test
     public void testUpdate() {
         System.out.println("update");
-        Person expected = kao.create(ontologyURI, instanceName);
-
-        expected.setFoafAge(22);
-        Person result = kao.update(expected);
-        assertEquals(expected, result);
+        Person person = kao.create(ontologyURI, instanceName, graphs);
+        person.setFoafAge(22);
+        person.setFoafGender("Feminino");
+        kao.update(person, graphs);
+        //
+        Person person_Aux = kao.retrieveInstance(ontologyURI, instanceName, graphs);
+        person_Aux.setFoafAge(new Integer(500));
+        person_Aux.setFoafGender("Masculino");
+        Person result = kao.update(person_Aux, graphs);
+        assertNotSame(person, result);
+        assertEquals(500, result.getFoafAge());
     }
 
     /**
@@ -245,7 +251,7 @@ public class AbstractKAOTest {
         String query = "INSERT { GRAPH ?g1 {?s foaf:gender \"Masculino\"}} \n"
                 + "WHERE { GRAPH ?g {values ?s {<" + expected.toString() + ">} ?s a foaf:Person; foaf:age ?age.}\n"
                 + "BIND(?g as ?g1)}";
-        boolean result = kao.executeUpdateQuery(query);
+        boolean result = kao.executeSPARQLUpdateQuery(query);
         Person res_person = kao.retrieveInstance(ontologyURI, instanceName, graphs);
         String res_gender = (String) res_person.getFoafGender();
         assertTrue(result);

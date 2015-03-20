@@ -284,11 +284,10 @@ public abstract class AbstractKAO {
         UpdateOperations updateOpe = new UpdateOperations();
 
         try {
+            //gets connection
             con = this.repository.getConnection();
             try {
-                //gets connection
                 con.setAutoCommit(false);
-
                 ob = updateOpe.updateDettachedInstance(instance, classe, con, this.getContexts());
 
                 // Saves the object in the repository
@@ -365,7 +364,7 @@ public abstract class AbstractKAO {
      * @param query the <code>String</code> with the query to be performed.
      * @return <code>boolean</code> true or false.
      */
-    public boolean executeUpdateQuery(String query) {
+    public boolean executeSPARQLUpdateQuery(String query) {
         return this.queryRunner.executeUpdateQuery(query);
     }
 
