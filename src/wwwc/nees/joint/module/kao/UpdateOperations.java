@@ -13,7 +13,6 @@ import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
-import org.openrdf.repository.RepositoryResult;
 import wwwc.nees.joint.model.JOINTResource;
 
 /**
@@ -28,7 +27,6 @@ public class UpdateOperations {
     private final String INTEGER = "java.lang.Integer";
     private final String FLOAT = "java.lang.Float";
     private final String DATE = "com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl";
-//    private RepositoryConnection connection;
     private ValueFactory f;
 
     public boolean isDatatype(String className) {
@@ -59,7 +57,6 @@ public class UpdateOperations {
 
     public Object updateDettachedInstance(Object instance, Class classe, RepositoryConnection connection, URI... contexts) throws ClassNotFoundException,
             InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, RepositoryException, NoSuchMethodException, Exception {
-//        this.connection = con;
         this.f = connection.getValueFactory();
 
         URI suj = f.createURI(instance.toString());
@@ -71,7 +68,7 @@ public class UpdateOperations {
 
         //retrieves all methods which were modified
         List<String> modifiedMethods = ((JOINTResource) instance).getInnerModifiedFields();
-        System.out.println(modifiedMethods);
+
         List<String> auxModifiedMethods = new ArrayList(modifiedMethods);
 
         //for over these modified methods
@@ -86,13 +83,7 @@ public class UpdateOperations {
             Iri iri = method.getAnnotation(Iri.class);
             URI pred = f.createURI(iri.value());
 
-            //retrieves and removes the info from this predicate
-            RemoveOperations removeOp = new RemoveOperations();
-            RepositoryResult<Statement> statements = connection.getStatements(suj, pred, null, true, contexts);
-            while (statements.hasNext()) {
-                Statement statement = statements.next();
-                removeOp.removeStatements(connection, statement.getSubject().stringValue(), statement.getPredicate().stringValue(), statement.getObject().stringValue(), statement.getContext().stringValue());
-            }
+            connection.remove(suj, pred, null, contexts);
 
             Object returnOb = method.invoke(instance);
 

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.openrdf.model.URI;
+import org.openrdf.model.impl.URIImpl;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
@@ -143,15 +144,15 @@ public abstract class AbstractKAO {
      */
     public void delete(String ontologyURI, String instanceName, URI... contexts) {
         setContexts(contexts);
-        RemoveOperations removeOpe = new RemoveOperations();
+
         try {
             con = this.repository.getConnection();
 
             try {
                 //gets connection
                 con.setAutoCommit(false);
-
-//                removeOpe.remove(ontologyURI, instanceName, con);
+                RemoveOperations removeOpe = new RemoveOperations();
+                //removes the quads that have the corresponding subject 
                 removeOpe.remove(ontologyURI, instanceName, con, this.getContexts());
                 // Saves the object in the repository
                 con.commit();
@@ -175,15 +176,16 @@ public abstract class AbstractKAO {
      */
     public <T> void delete(T instance, URI... contexts) {
         setContexts(contexts);
-        RemoveOperations removeOpe = new RemoveOperations();
         try {
-//            RepositoryConnection conn = this.repository.getConnection();
             con = this.repository.getConnection();
 
             try {
                 //gets connection
                 con.setAutoCommit(false);
+                RemoveOperations removeOpe = new RemoveOperations();
+
                 removeOpe.remove(instance, con, this.getContexts());
+
                 // Saves the object in the repository
                 con.commit();
 

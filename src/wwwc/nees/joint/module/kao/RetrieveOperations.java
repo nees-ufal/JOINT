@@ -1,6 +1,5 @@
 package wwwc.nees.joint.module.kao;
 
-import info.aduna.iteration.Iterations;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -91,19 +90,16 @@ public class RetrieveOperations {
         // Creates a new java.util.List
         List<T> listInstances = new ArrayList<>();
         RepositoryResult<Statement> stts = this.connection.getStatements(null, RDF.TYPE, this.f.createURI(((Iri) clazz.getAnnotation(Iri.class)).value()), true, contexts);
-        List<Statement> statements = Iterations.asList(stts);
-        stts.close();
-        if (!statements.isEmpty()) {
+        while (stts.hasNext()) {
             List<String> instancesName = new ArrayList<>();
 
-            for (Statement stat : statements) {
-                instancesName.add(stat.getSubject().stringValue());
-            }
+            Statement statement = stts.next();
 
-            statements = null;
+            instancesName.add(statement.getSubject().stringValue());
+
             listInstances.addAll((Collection<? extends T>) (T) this.convertCollectionOriginalForImpl(instancesName, clazz, contexts));
         }
-
+        stts.close();
         return listInstances;
     }
 
@@ -111,13 +107,11 @@ public class RetrieveOperations {
         ValueFactory f = connection.getValueFactory();
         URI sub = f.createURI(subj);
 
-        RepositoryResult<Statement> stts = this.connection.getStatements(sub, RDF.TYPE, null, true, contexts);
-        List<Statement> statements = Iterations.asList(stts);
-        stts.close();
+        RepositoryResult<Statement> statements = this.connection.getStatements(sub, RDF.TYPE, null, true, contexts);
         //Preparar a query para recuperar o tipo de instancia
-        if (!statements.isEmpty()) {
-            Statement st = statements.get(0);
-            statements = null;
+        while (statements.hasNext()) {
+            Statement st = statements.next();
+            statements.close();
             String uriObj = st.getObject().stringValue();
             String nameClasse = this.packages.get(uriObj);
             if (nameClasse == null) {
@@ -125,6 +119,7 @@ public class RetrieveOperations {
             }
             return nameClasse;
         }
+        statements.close();
         return OBJECT_CLASS;
     }
 
@@ -188,7 +183,7 @@ public class RetrieveOperations {
 
         URI suj = f.createURI(instanceName);
         //checks if this instance is in the triple store
-        boolean objectNull = this.connection.hasStatement(suj, null, null, true, contexts);
+        boolean objectNull = this.connection.hasStatement(suj, RDF.TYPE, null, true, contexts);
 
         if (!objectNull) {
             return null;
@@ -213,9 +208,7 @@ public class RetrieveOperations {
         Method[] allMethodsClassImpl = classImpl.getMethods();
 
         //retrieves all values of the properties of the instance
-        RepositoryResult<Statement> stts = this.connection.getStatements(suj, null, null, true, contexts);
-        List<Statement> statements = Iterations.asList(stts);
-        stts.close();
+        List<Statement> statements = this.connection.getStatements(suj, null, null, true, contexts).asList();
         //creates a map to hold all values of the properties
         Map<String, List<Value>> mapProperties = this.sortPropertiesAndValues(statements);
 
@@ -334,7 +327,6 @@ public class RetrieveOperations {
         //constructs a query to get all information about the objects that will
         //be parsed
         Iterator<Statement> stts = graphQueryConstruct.getStatementsByGraphQuery_withContext(instancesName, null, null, contexts).iterator();
-
         //creates a map with key - uri/object - list of statements
         Map<String, List<Statement>> cInformation = new HashMap<>();
         //iterates the previous graph result
@@ -357,7 +349,7 @@ public class RetrieveOperations {
                 cInformation.get(uri).add(st);
             }
         }
-        
+
         for (String instanceURI : instancesName) {
 
             //creates an instance with the concrete class
