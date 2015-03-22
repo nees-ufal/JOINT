@@ -72,14 +72,15 @@ public class RemoveOperations {
     public <T> void removeStatement(RepositoryConnection connection, String subject, String property, String object, URI... contexts) throws RepositoryException, MalformedQueryException, UpdateExecutionException {
         //Query to retrieve the informations (?s ?p ?o)
         StringBuilder query = new StringBuilder();
-        if (contexts == null) {
-            return;
-        }
         //Build the query to retrieve the requested elements (?s ?p ?o) where
         // Sets the context of the instance
         query.append("DELETE {");
-        for (URI context : contexts) {
-            query.append("GRAPH <").append(context.stringValue()).append("> {?s ?p ?o.}");
+        if (contexts.length == 0) {
+            query.append("GRAPH ?g {?s ?p ?o.}");
+        } else {
+            for (URI context : contexts) {
+                query.append("GRAPH <").append(context.stringValue()).append("> {?s ?p ?o.}");
+            }
         }
         query.append("} WHERE {");
         if (subject != null) {
@@ -96,8 +97,7 @@ public class RemoveOperations {
             query.append(obj).append("} ");
         }
 
-        query.append("?s ?p ?o.}");
-
+        query.append("GRAPH ?g {?s ?p ?o.}}");
         //evaluate the graph result
         Update prepareGraphQuery = connection.prepareUpdate(QueryLanguage.SPARQL, query.toString());
         prepareGraphQuery.execute();
