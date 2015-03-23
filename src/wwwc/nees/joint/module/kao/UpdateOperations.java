@@ -71,6 +71,7 @@ public class UpdateOperations {
 
         List<String> auxModifiedMethods = new ArrayList(modifiedMethods);
 
+        RemoveOperations removeOpe = new RemoveOperations();
         //for over these modified methods
         for (String methodName : auxModifiedMethods) {
 
@@ -83,7 +84,8 @@ public class UpdateOperations {
             Iri iri = method.getAnnotation(Iri.class);
             URI pred = f.createURI(iri.value());
 
-            connection.remove(suj, pred, null, contexts);
+            //connection.remove(suj, pred, null, contexts);
+            removeOpe.removeStatement(connection, suj.toString(), pred.toString(), null, contexts);
 
             Object returnOb = method.invoke(instance);
 

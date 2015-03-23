@@ -7,6 +7,7 @@
 .mtj.tmp/
 
 # Package Files #
+*.jar
 *.war
 *.ear
 
@@ -16,6 +17,7 @@ hs_err_pid*
 
 ### NetBeans ###
 nbproject/**
+nbproject/*.properties
 build/
 nbbuild/
 dist/
@@ -24,3 +26,4 @@ nbactions.xml
 nb-configuration.xml
 project.properties
 .nb-gradle/
+store/
