@@ -59,7 +59,7 @@ public class RemoveOperations {
     }
 
     /**
-     * Removes an desired quad in the repository
+     * Removes an desired quad in the repository using SPARQL Update
      *
      * @param connection an object representing the connection with the database
      * @param subject representing the subject corresponding in a quad.
@@ -69,7 +69,7 @@ public class RemoveOperations {
      * removed
      * @throws java.lang.Exception
      */
-    public <T> void removeStatement(RepositoryConnection connection, String subject, String property, String object, URI... contexts) throws RepositoryException, MalformedQueryException, UpdateExecutionException {
+    public <T> void removeStatements(RepositoryConnection connection, String subject, String property, String object, URI... contexts) throws RepositoryException, MalformedQueryException, UpdateExecutionException {
         //Query to retrieve the informations (?s ?p ?o)
         StringBuilder query = new StringBuilder();
         //Build the query to retrieve the requested elements (?s ?p ?o) where
@@ -104,12 +104,24 @@ public class RemoveOperations {
     }
 
     /**
+     * Removes the desired instance of the repository using SPARQL Update
+     *
+     * @param instanceURI an <code>Object</code> representing the instance.
+     * @param connection an object representing the connection with the database
+     * @param contexts an array of URIs that represent the contexts where
+     */
+    public void remove_SPARQLUpdate(RepositoryConnection connection, String instanceURI, URI... contexts) throws RepositoryException, MalformedQueryException, UpdateExecutionException {
+        removeStatements(connection, instanceURI, null, null, contexts);
+        removeStatements(connection, null, null, instanceURI, contexts);
+    }
+
+    /**
      * Identifies wheter the object is an URL, number or string
      *
      * @param object is the value of an object corresponding to the triple
      * @return a string in the form of identified type (URI, number or literal)
      */
-    public String identifyObjectType(String object) {
+    private String identifyObjectType(String object) {
         StringBuilder value = new StringBuilder();
 
         try {

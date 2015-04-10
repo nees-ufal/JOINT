@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package wwwc.nees.joint.facade;
 
 import wwwc.nees.joint.module.ontology.operations.OntologyCompiler;
@@ -49,7 +45,7 @@ public class RepositoryFacade{
     /**
      * Performs rules in the specified repository
      *
-     * @param url
+     * @param repositoryURL
      *            the Repository URL
      * @return statements
      *            the Number of inferred Statements

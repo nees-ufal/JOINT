@@ -152,7 +152,10 @@ public abstract class AbstractKAO {
                 con.setAutoCommit(false);
                 RemoveOperations removeOpe = new RemoveOperations();
                 //removes the quads that have the corresponding subject 
-                removeOpe.remove(ontologyURI, instanceName, con, this.getContexts());
+//                removeOpe.remove(ontologyURI, instanceName, con, this.getContexts());
+                String subj = ontologyURI + instanceName;
+                removeOpe.remove_SPARQLUpdate(con, subj, this.getContexts());
+
                 // Saves the object in the repository
                 con.commit();
             } catch (Exception e) {
@@ -171,19 +174,23 @@ public abstract class AbstractKAO {
     /**
      * Removes the desired instance in the repository, must be saved after.
      *
-     * @param instanceName a <code>String</code> with the instance name.
+     * @param instance an object T with the instance
+     * @param contexts the graphs in which the instance is removed.
      */
     public <T> void delete(T instance, URI... contexts) {
-        setContexts(contexts);
         try {
+            setContexts(contexts);
+
             con = this.repository.getConnection();
+
+            RemoveOperations removeOpe = new RemoveOperations();
 
             try {
                 //gets connection
                 con.setAutoCommit(false);
-                RemoveOperations removeOpe = new RemoveOperations();
 
-                removeOpe.remove(instance, con, this.getContexts());
+                removeOpe.remove_SPARQLUpdate(con, instance.toString(), this.getContexts());
+//                removeOpe.remove(instance, con, this.getContexts());
 
                 // Saves the object in the repository
                 con.commit();
@@ -206,14 +213,13 @@ public abstract class AbstractKAO {
      *
      * @param ontologyURI : a <code>String</code> with the ontology base URI
      * @param instanceName a <code>String</code> with the instance name.
+     * @param contexts the graphs in which the instance is removed.
      * @return T the desired instance.
      */
     public <T> T retrieveInstance(String ontologyURI, String instanceName, URI... contexts) {
-        setContexts(contexts);
         Object ob = null;
-
         try {
-//            RepositoryConnection conn = this.repository.getConnection();
+            setContexts(contexts);
             con = this.repository.getConnection();
             RetrieveOperations retrieveOpe = new RetrieveOperations(con);
             try {

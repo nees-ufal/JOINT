@@ -85,7 +85,7 @@ public class UpdateOperations {
             URI pred = f.createURI(iri.value());
 
             //connection.remove(suj, pred, null, contexts);
-            removeOpe.removeStatement(connection, suj.toString(), pred.toString(), null, contexts);
+            removeOpe.removeStatements(connection, suj.toString(), pred.toString(), null, contexts);
 
             Object returnOb = method.invoke(instance);
 
