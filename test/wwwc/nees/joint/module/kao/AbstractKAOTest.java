@@ -30,11 +30,10 @@ public class AbstractKAOTest {
         ontologyURI = "http://xmlns.com/foaf/0.1/";
         foafGraph_A = new URIImpl(ontologyURI + "A/");
         foafGraph_B = new URIImpl(ontologyURI + "B/");
-        graphs = new URI[]{new URIImpl(ontologyURI + "A/"), new URIImpl(ontologyURI + "B/")};
-//        graphs = new URI[]{null};
+        graphs = new URI[]{foafGraph_A, foafGraph_B};
         kao = new AbstractKAOImpl(Person.class);
 
-        instanceName = "Maria";
+        instanceName = "Tereza";
     }
 
     @After
@@ -54,8 +53,6 @@ public class AbstractKAOTest {
      */
     @Test
     public void testCreate() {
-        System.out.println("create");
-
         Person expected = kao.create(ontologyURI, instanceName, graphs);
         Person result = kao.retrieveInstance(ontologyURI, instanceName, graphs);
 
@@ -67,12 +64,11 @@ public class AbstractKAOTest {
      */
     @Test
     public void testCreateWithUniqueID() {
-        System.out.println("createWithUniqueID");
         String instancePrefix = "Person_";
         List<Person> expected = kao.retrieveAllInstances(graphs);
         Person p1 = kao.createWithUniqueID(ontologyURI, instancePrefix, graphs);
         Person p2 = kao.createWithUniqueID(ontologyURI, instancePrefix, graphs);
-        if (graphs == null) {
+        if (graphs.length == 0) {
             expected.add(p1);
             expected.add(p2);
         } else {
@@ -91,8 +87,10 @@ public class AbstractKAOTest {
      */
     @Test
     public void testDelete_String_String() {
-        System.out.println("delete");
         Person p = kao.create(ontologyURI, instanceName, graphs);
+        p.setFoafGender("Feminino");
+        p.setFoafAge(22);
+        kao.update(p, graphs);
         kao.delete(ontologyURI, instanceName, graphs);
         Person p_exp = kao.retrieveInstance(ontologyURI, instanceName, graphs);
         assertNotNull(p);
@@ -104,8 +102,10 @@ public class AbstractKAOTest {
      */
     @Test
     public void testDelete_GenericType() {
-        System.out.println("delete");
         Person expected = kao.create(ontologyURI, instanceName, graphs);
+        expected.setFoafGender("Feminino");
+        expected.setFoafAge(22);
+        kao.update(expected, graphs);
         kao.delete(expected, graphs);
         Person result = kao.retrieveInstance(ontologyURI, instanceName, graphs);
         assertNull(result);
@@ -116,7 +116,6 @@ public class AbstractKAOTest {
      */
     @Test
     public void testRetrieveInstance() {
-        System.out.println("retrieveInstance");
         Person expected = kao.create(ontologyURI, instanceName, graphs);
         kao.update(expected, graphs);
         Person result = kao.retrieveInstance(ontologyURI, instanceName, graphs);
@@ -128,14 +127,17 @@ public class AbstractKAOTest {
      */
     @Test
     public void testRetrieveAllInstances() {
-        System.out.println("retrieveAllInstances");
         List<Person> initial = kao.retrieveAllInstances(graphs);
         Person p = kao.create(ontologyURI, instanceName, graphs);
-        for (URI context : graphs) {
+        if (graphs.length == 0) {
             initial.add(p);
+        } else {
+            for (URI context : graphs) {
+                initial.add(p);
+            }
         }
         List<Person> result = kao.retrieveAllInstances(graphs);
-        
+
         assertEquals(initial.size(), result.size());
     }
 
@@ -144,11 +146,17 @@ public class AbstractKAOTest {
      */
     @Test
     public void testUpdate() {
-        System.out.println("update");
-        Person expected = kao.create(ontologyURI, instanceName, graphs);
-        expected.setFoafAge(22);
-        Person result = kao.update(expected, graphs);
-        assertEquals(expected, result);
+        Person person = kao.create(ontologyURI, instanceName, graphs);
+        person.setFoafAge(22);
+        person.setFoafGender("Feminino");
+        kao.update(person, graphs);
+        //
+        Person person_Aux = kao.retrieveInstance(ontologyURI, instanceName, graphs);
+        person_Aux.setFoafAge(new Integer(500));
+        person_Aux.setFoafGender("Masculino");
+        Person result = kao.update(person_Aux, graphs);
+        assertNotSame(person, result);
+        assertEquals(500, result.getFoafAge());
     }
 
     /**
@@ -156,7 +164,6 @@ public class AbstractKAOTest {
      */
     @Test
     public void testExecuteSPARQLquerySingleResult() {
-        System.out.println("executeSPARQLquerySingleResult");
         Person expected = kao.create(ontologyURI, instanceName, graphs);
         String query = "select ?s where {values ?s {<" + expected + ">} ?s a foaf:Person.}";
         Person result = (Person) kao.executeSPARQLquerySingleResult(query);
@@ -168,14 +175,13 @@ public class AbstractKAOTest {
      */
     @Test
     public void testExecuteSPARQLqueryResultList() {
-        System.out.println("executeSPARQLqueryResultList");
         String query = "select ?s where {?s a foaf:Person.}";
         List<Person> expected = kao.executeSPARQLqueryResultList(query);
         Person p1 = kao.create(ontologyURI, instanceName + "1", graphs);
         Person p2 = kao.create(ontologyURI, instanceName + "2", graphs);
 
         //An instance can be added in more than one context, therefore, it must be recorded for each context
-        if (graphs == null) {
+        if (graphs.length == 0) {
             expected.add(p1);
             expected.add(p2);
         } else {
@@ -193,12 +199,15 @@ public class AbstractKAOTest {
      */
     @Test
     public void testExecuteQueryAsIterator() {
-        System.out.println("executeQueryAsIterator");
         String query = "select ?s where {?s a foaf:Person.}";
         List<Person> list_expected = new ArrayList<>(kao.executeSPARQLqueryResultList(query, graphs));
 
         Person expected1 = kao.create(ontologyURI, instanceName + "1", graphs);
         Person expected2 = kao.create(ontologyURI, instanceName + "2", graphs);
+        if (graphs.length == 0) {
+            list_expected.add(expected1);
+            list_expected.add(expected2);
+        }
         for (URI context : graphs) {
             list_expected.add(expected1);
             list_expected.add(expected2);
@@ -216,11 +225,30 @@ public class AbstractKAOTest {
      */
     @Test
     public void testExecuteBooleanQuery() {
-        System.out.println("executeBooleanQuery");
         Person expected = kao.create(ontologyURI, instanceName, graphs);
         String query = "ASK where {values ?s {<" + expected.toString() + ">} ?s a foaf:Person.}";
         boolean result = kao.executeBooleanQuery(query);
         assertTrue(result);
+    }
+
+    /**
+     * Test of executeSPARQLUpdateQuery method, of class AbstractKAO.
+     */
+    @Test
+    public void testExecuteSPARQLUpdateQuery() {
+        Person expected = kao.create(ontologyURI, instanceName, graphs);
+        expected.setFoafAge(30);
+        kao.update(expected, graphs);
+
+        String exp_gender = (String) expected.getFoafGender();
+        String query = "INSERT { GRAPH ?g1 {?s foaf:gender \"Masculino\"}} \n"
+                + "WHERE { GRAPH ?g {values ?s {<" + expected.toString() + ">} ?s a foaf:Person; foaf:age ?age.}\n"
+                + "BIND(?g as ?g1)}";
+        boolean result = kao.executeSPARQLUpdateQuery(query);
+        Person res_person = kao.retrieveInstance(ontologyURI, instanceName, graphs);
+        String res_gender = (String) res_person.getFoafGender();
+        assertTrue(result);
+        assertNotSame(exp_gender, res_gender);
     }
 
     /**

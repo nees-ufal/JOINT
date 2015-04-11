@@ -21,6 +21,7 @@ import org.openrdf.query.BooleanQuery;
 import org.openrdf.query.QueryLanguage;
 import org.openrdf.query.TupleQuery;
 import org.openrdf.query.TupleQueryResult;
+import org.openrdf.query.Update;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
@@ -429,7 +430,45 @@ public class SPARQLQueryRunnerImpl implements QueryRunner {
                     log(Level.SEVERE, null, eR);
         }
 
-        //Gets the iterator of the list
+        return result;
+    }
+
+    /**
+     * Performs SPARQL update queries in the repository, returning a boolean
+     * true if the query was performed with successful or false otherwise.
+     *
+     * @param query the <code>String</code> with the query to be performed.
+     * @return <code>boolean</code> true or false.
+     */
+    @Override
+    public boolean executeUpdateQuery(String query) {
+
+        boolean result = false;
+
+        try {
+            RepositoryConnection conn = this.repository.getConnection();
+            conn.setAutoCommit(false);
+            try {
+                // Creates the update query based on the parameter
+                Update update = conn.prepareUpdate(QueryLanguage.SPARQL, query);
+
+                // Performs the query
+                update.execute();
+
+                conn.commit();
+                result = true;
+            } catch (Exception e) {
+                conn.rollback();
+                Logger.getLogger(SPARQLQueryRunnerImpl.class.getName()).
+                        log(Level.SEVERE, null, e);
+            } finally {
+                conn.close();
+            }
+        } catch (RepositoryException eR) {
+            Logger.getLogger(SPARQLQueryRunnerImpl.class.getName()).
+                    log(Level.SEVERE, null, eR);
+        }
+
         return result;
     }
 }

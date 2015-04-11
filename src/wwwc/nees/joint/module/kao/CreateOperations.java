@@ -32,7 +32,7 @@ public class CreateOperations {
      */
     public <T> T create(String ontologyURI, String instanceName, Class<T> clazz, RepositoryConnection connection, URI... contexts)
             throws ClassNotFoundException, RepositoryException, NoSuchMethodException,
-            IllegalAccessException, IllegalArgumentException, InvocationTargetException, InstantiationException {
+            IllegalAccessException, IllegalArgumentException, InvocationTargetException, InstantiationException, NullPointerException {
         Object ob = null;
         Class classImpl;
         try {
@@ -74,7 +74,7 @@ public class CreateOperations {
      */
     public <T> T createWithUniqueID(String ontologyURI, String instancePrefix, Class<T> clazz, RepositoryConnection connection, URI... contexts)
             throws ClassNotFoundException, RepositoryException, NoSuchMethodException,
-            IllegalAccessException, IllegalArgumentException, InvocationTargetException, InstantiationException {
+            IllegalAccessException, IllegalArgumentException, InvocationTargetException, InstantiationException,NullPointerException {
         // Creates an object with the URI and the .class
         Object ob = null;
         Class classImpl;
