@@ -26,4 +26,8 @@ nbactions.xml
 nb-configuration.xml
 project.properties
 .nb-gradle/
+<<<<<<< HEAD
+
+=======
+>>>>>>> 92042d027db06dced7187040ca5dfe08a8219b42
 store/
