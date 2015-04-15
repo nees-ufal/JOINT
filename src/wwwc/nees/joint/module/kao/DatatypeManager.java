@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package wwwc.nees.joint.module.kao;
 
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
@@ -11,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.commons.collections4.BidiMap;
+import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.openrdf.model.Literal;
 import org.openrdf.model.URI;
 import org.openrdf.model.Value;
@@ -38,7 +36,9 @@ public class DatatypeManager {
     private final String OBJECT_NS = "java:Object";
     private final String DATETIME_CLASS = "javax.xml.datatype.XMLGregorianCalendar";
     private final String DATETIME_NS = "http://www.w3.org/2001/XMLSchema#dateTime";
-    private Map<String, Class> namespacesClass;
+//    private Map<String, Class> namespacesClass;
+    private BidiMap<String, Class> namespacesClass;
+
     // VARIABLES
     // -------------------------------------------------------------------------
     // The repository static variable
@@ -62,7 +62,8 @@ public class DatatypeManager {
 
     private DatatypeManager() {
         try {
-            namespacesClass = new HashMap<String, Class>();
+//            namespacesClass = new HashMap<>();
+            namespacesClass = new DualHashBidiMap<>();
             namespacesClass.put(BOOLEAN_NS, Class.forName(BOOLEAN_CLASS));
             namespacesClass.put(INTEGER_NS, Class.forName(INTEGER_CLASS));
             namespacesClass.put(FLOAT_NS, Class.forName(FLOAT_CLASS));
@@ -70,7 +71,6 @@ public class DatatypeManager {
             namespacesClass.put(STRING_NS, Class.forName(STRING_CLASS));
             namespacesClass.put(DECIMAL_NS, Class.forName(DECIMAL_CLASS));
             namespacesClass.put(DOUBLE_NS, Class.forName(DOUBLE_CLASS));
-
         } catch (ClassNotFoundException ex) {
             Logger.getLogger(DatatypeManager.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -176,6 +176,35 @@ public class DatatypeManager {
         } else {
             datatype = dType.stringValue();
         }
+        Class<?> type;
+        if (namespacesClass.containsKey(datatype)) {
+            type = namespacesClass.get(datatype);
+        } else if (datatype.equals(OBJECT_NS)) {
+            try {
+                type = Class.forName(OBJECT_CLASS);
+            } catch (ClassNotFoundException e) {
+                throw new Exception(e);
+            }
+        } else {
+            throw new Exception("Unknown datatype: " + datatype);
+        }
+        return convertDatatype(lit.stringValue(), type.getName());
+    }
+
+    public Object convertLiteralToDataype(Literal lit, String parameterClassName) throws Exception {
+        URI dType = lit.getDatatype();
+        String datatype;
+        if (dType == null) {
+            String className = namespacesClass.getKey(Class.forName(parameterClassName));
+            if (className != null) {
+                datatype = className;
+            } else {
+                datatype = OBJECT_NS;
+            }
+        } else {
+            datatype = dType.stringValue();
+        }
+
         Class<?> type;
         if (namespacesClass.containsKey(datatype)) {
             type = namespacesClass.get(datatype);

@@ -1,5 +1,6 @@
 package wwwc.nees.joint.module.kao;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -9,8 +10,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.*;
-import org.openrdf.model.URI;
-import org.openrdf.model.impl.URIImpl;
 import org.openrdf.util.iterators.Iterators;
 
 /**
@@ -28,8 +27,8 @@ public class AbstractKAOTest {
     @Before
     public void setUp() {
         ontologyURI = "http://xmlns.com/foaf/0.1/";
-        foafGraph_A = new URIImpl(ontologyURI + "A/");
-        foafGraph_B = new URIImpl(ontologyURI + "B/");
+        foafGraph_A = URI.create(ontologyURI + "A/");
+        foafGraph_B = URI.create(ontologyURI + "B/");
         graphs = new URI[]{foafGraph_A, foafGraph_B};
         kao = new AbstractKAOImpl(Person.class);
 

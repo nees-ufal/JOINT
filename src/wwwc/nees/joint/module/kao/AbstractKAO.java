@@ -1,5 +1,6 @@
 package wwwc.nees.joint.module.kao;
 
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -53,11 +54,7 @@ public abstract class AbstractKAO {
 
         // Retrieves the repository in the server
         this.repository = RepositoryFactory.getRepository();
-//        try {
-//            this.con = this.repository.getConnection();
-//        } catch (RepositoryException ex) {
-//            Logger.getLogger(AbstractKAO.class.getName()).log(Level.SEVERE, null, ex);
-//        }
+
         // Creates a QueryRunner with SPARQL implementation
         this.queryRunner = new SPARQLQueryRunnerImpl(this.repository);
         this.contexts = new URI[]{};
@@ -72,7 +69,7 @@ public abstract class AbstractKAO {
      * @param ontologyURI a <code>String</code> with the instance name.
      * @return T the new instance.
      */
-    public <T> T create(String ontologyURI, String instanceName, URI... contexts) {
+    public <T> T create(String ontologyURI, String instanceName, java.net.URI... contexts) {
         setContexts(contexts);
         CreateOperations createOpe = new CreateOperations();
 
@@ -88,13 +85,54 @@ public abstract class AbstractKAO {
             } catch (Exception e) {
                 // If throws any exception rollback
                 con.rollback();
-                Logger.getLogger(AbstractKAO.class.getName()).log(Level.SEVERE, null, e);
+                Logger
+                        .getLogger(AbstractKAO.class
+                                .getName()).log(Level.SEVERE, null, e);
             } finally {
                 con.close();
+
             }
         } catch (RepositoryException eR) {
             // If throws repository Exception the the connection is not inialized
-            Logger.getLogger(AbstractKAO.class.getName()).log(Level.SEVERE, null, eR);
+            Logger.getLogger(AbstractKAO.class
+                    .getName()).log(Level.SEVERE, null, eR);
+        }
+        return (T) ob;
+    }
+
+    /**
+     * Creates a new instance in the repository with the specified uri.
+     *
+     * @param instanceURI a <code>String</code> with the instance uri.
+     * @return T the new instance.
+     */
+    public <T> T create(String instanceURI, java.net.URI... contexts) {
+        setContexts(contexts);
+        CreateOperations createOpe = new CreateOperations();
+
+        Object ob = null;
+        try {
+            con = this.repository.getConnection();
+            try {
+                con.setAutoCommit(false);
+
+                ob = createOpe.create(instanceURI, this.classe, con, this.getContexts());
+                con.commit();
+
+            } catch (Exception e) {
+                // If throws any exception rollback
+                con.rollback();
+                Logger
+                        .getLogger(AbstractKAO.class
+                                .getName()).log(Level.SEVERE, null, e);
+            } finally {
+                con.close();
+
+            }
+        } catch (RepositoryException eR) {
+            // If throws repository Exception the the connection is not inialized
+            Logger.getLogger(AbstractKAO.class
+                    .getName()).log(Level.SEVERE, null, eR);
         }
         return (T) ob;
     }
@@ -113,8 +151,16 @@ public abstract class AbstractKAO {
      *
      * @param contexts a <code>URI[]</code> with contexts.
      */
-    public void setContexts(URI[] contexts) {
-        this.contexts = (contexts == null) ? new URI[]{} : contexts;
+    public void setContexts(java.net.URI[] contexts) {
+        if (contexts == null) {
+            this.contexts = new URI[]{};
+        } else {
+            List<URI> uris = new ArrayList<>();
+            for (java.net.URI uri : contexts) {
+                uris.add(new URIImpl(uri.toString()));
+            }
+            this.contexts = uris.toArray(this.contexts);
+        }
     }
 
     /**
@@ -125,7 +171,7 @@ public abstract class AbstractKAO {
      * @param ontologyURI a <code>String</code> with the instance name.
      * @return T the new instance.
      */
-    public <T> T createWithUniqueID(String ontologyURI, String instancePrefix, URI... contexts) {
+    public <T> T createWithUniqueID(String ontologyURI, String instancePrefix, java.net.URI... contexts) {
         setContexts(contexts);
         CreateOperations createOpe = new CreateOperations();
 
@@ -140,13 +186,17 @@ public abstract class AbstractKAO {
             } catch (Exception e) {
                 // If throws any exception rollback
                 con.rollback();
-                Logger.getLogger(AbstractKAO.class.getName()).log(Level.SEVERE, null, e);
+                Logger
+                        .getLogger(AbstractKAO.class
+                                .getName()).log(Level.SEVERE, null, e);
             } finally {
                 con.close();
+
             }
         } catch (RepositoryException eR) {
             // If throws repository Exception the the connection is not inialized
-            Logger.getLogger(AbstractKAO.class.getName()).log(Level.SEVERE, null, eR);
+            Logger.getLogger(AbstractKAO.class
+                    .getName()).log(Level.SEVERE, null, eR);
         }
         return (T) ob;
     }
@@ -156,7 +206,7 @@ public abstract class AbstractKAO {
      *
      * @param instanceName a <code>String</code> with the instance name.
      */
-    public void delete(String ontologyURI, String instanceName, URI... contexts) {
+    public void delete(String ontologyURI, String instanceName, java.net.URI... contexts) {
         setContexts(contexts);
 
         try {
@@ -176,13 +226,17 @@ public abstract class AbstractKAO {
             } catch (Exception e) {
                 // If throws any exception rollback
                 con.rollback();
-                Logger.getLogger(AbstractKAO.class.getName()).log(Level.SEVERE, null, e);
+                Logger
+                        .getLogger(AbstractKAO.class
+                                .getName()).log(Level.SEVERE, null, e);
             } finally {
                 con.close();
+
             }
         } catch (RepositoryException eR) {
             // If throws repository Exception the the connection is not inialized
-            Logger.getLogger(AbstractKAO.class.getName()).log(Level.SEVERE, null, eR);
+            Logger.getLogger(AbstractKAO.class
+                    .getName()).log(Level.SEVERE, null, eR);
         }
     }
 
@@ -192,7 +246,7 @@ public abstract class AbstractKAO {
      * @param instance an object T with the instance
      * @param contexts the graphs in which the instance is removed.
      */
-    public <T> void delete(T instance, URI... contexts) {
+    public <T> void delete(T instance, java.net.URI... contexts) {
         try {
             setContexts(contexts);
 
@@ -213,13 +267,17 @@ public abstract class AbstractKAO {
             } catch (Exception e) {
                 // If throws any exception rollback
                 con.rollback();
-                Logger.getLogger(AbstractKAO.class.getName()).log(Level.SEVERE, null, e);
+                Logger
+                        .getLogger(AbstractKAO.class
+                                .getName()).log(Level.SEVERE, null, e);
             } finally {
                 con.close();
+
             }
         } catch (RepositoryException eR) {
             // If throws repository Exception the the connection is not inialized
-            Logger.getLogger(AbstractKAO.class.getName()).log(Level.SEVERE, null, eR);
+            Logger.getLogger(AbstractKAO.class
+                    .getName()).log(Level.SEVERE, null, eR);
         }
     }
 
@@ -231,7 +289,7 @@ public abstract class AbstractKAO {
      * @param contexts the graphs in which the instance is removed.
      * @return T the desired instance.
      */
-    public <T> T retrieveInstance(String ontologyURI, String instanceName, URI... contexts) {
+    public <T> T retrieveInstance(String ontologyURI, String instanceName, java.net.URI... contexts) {
         Object ob = null;
         try {
             setContexts(contexts);
@@ -248,13 +306,17 @@ public abstract class AbstractKAO {
             } catch (Exception e) {
                 // If throws any exception rollback
                 con.rollback();
-                Logger.getLogger(AbstractKAO.class.getName()).log(Level.SEVERE, null, e);
+                Logger
+                        .getLogger(AbstractKAO.class
+                                .getName()).log(Level.SEVERE, null, e);
             } finally {
                 con.close();
+
             }
         } catch (RepositoryException eR) {
             // If throws repository Exception the the connection is not inialized
-            Logger.getLogger(AbstractKAO.class.getName()).log(Level.SEVERE, null, eR);
+            Logger.getLogger(AbstractKAO.class
+                    .getName()).log(Level.SEVERE, null, eR);
         }
         return (T) ob;
     }
@@ -264,7 +326,7 @@ public abstract class AbstractKAO {
      *
      * @return <code>List<T></code> a List with the instances.
      */
-    public <T> List<T> retrieveAllInstances(URI... contexts) {
+    public <T> List<T> retrieveAllInstances(java.net.URI... contexts) {
         setContexts(contexts);
         // Creates a new java.util.List
         List<T> listInstances = new ArrayList<>();
@@ -283,13 +345,17 @@ public abstract class AbstractKAO {
             } catch (Exception e) {
                 // If throws any exception rollback
                 con.rollback();
-                Logger.getLogger(AbstractKAO.class.getName()).log(Level.SEVERE, null, e);
+                Logger
+                        .getLogger(AbstractKAO.class
+                                .getName()).log(Level.SEVERE, null, e);
             } finally {
                 con.close();
+
             }
         } catch (RepositoryException eR) {
             // If throws repository Exception the the connection is not inialized
-            Logger.getLogger(AbstractKAO.class.getName()).log(Level.SEVERE, null, eR);
+            Logger.getLogger(AbstractKAO.class
+                    .getName()).log(Level.SEVERE, null, eR);
         }
 
         return listInstances;
@@ -300,7 +366,7 @@ public abstract class AbstractKAO {
      * with it.
      *
      */
-    public <T> T update(T instance, URI... contexts) {
+    public <T> T update(T instance, java.net.URI... contexts) {
         setContexts(contexts);
         Object ob = null;
         UpdateOperations updateOpe = new UpdateOperations();
@@ -317,13 +383,17 @@ public abstract class AbstractKAO {
             } catch (Exception e) {
                 // If throws any exception rollback
                 con.rollback();
-                Logger.getLogger(AbstractKAO.class.getName()).log(Level.SEVERE, null, e);
+                Logger
+                        .getLogger(AbstractKAO.class
+                                .getName()).log(Level.SEVERE, null, e);
             } finally {
                 con.close();
+
             }
         } catch (RepositoryException eR) {
             // If throws repository Exception the the connection is not inialized
-            Logger.getLogger(AbstractKAO.class.getName()).log(Level.SEVERE, null, eR);
+            Logger.getLogger(AbstractKAO.class
+                    .getName()).log(Level.SEVERE, null, eR);
         }
         return (T) ob;
     }
@@ -364,18 +434,18 @@ public abstract class AbstractKAO {
      *
      * @return <code>Iterator<Object></code> a java.util.List with the results.
      */
-    public Iterator executeQueryAsIterator(String query, URI... contexts) {
-        Set<URI> ctx = new HashSet<>();
-        
-        for (URI ctx1 : contexts) {
+    public Iterator executeQueryAsIterator(String query,java.net.URI... contexts) {
+        Set<java.net.URI> ctx = new HashSet<>();
+
+        for (java.net.URI ctx1 : contexts) {
             ctx.add(ctx1);
         }
-        
-        for (URI ctx1 : this.retrieveContexts(query)) {
+
+        for (java.net.URI ctx1 : this.retrieveContexts(query)) {
             ctx.add(ctx1);
         }
-        
-        setContexts((URI[]) ctx.toArray());
+
+        setContexts((java.net.URI[]) ctx.toArray());
         return this.queryRunner.executeQueryAsIterator(query, this.getContexts());
     }
 
@@ -422,18 +492,23 @@ public abstract class AbstractKAO {
 
     /**
      * Retrieve contexts from a sparql query.
+     *
      * @param sparqlQuery a <code>String</code> with a sparql query.
      * @return a <code>URI[]</code> with contexts.
      */
-    public URI[] retrieveContexts(String sparqlQuery) {
+    public java.net.URI[] retrieveContexts(String sparqlQuery) {
         Pattern p = Pattern.compile("([\\s]+from[\\s]+[\\<](.+)[\\>])");
-        ArrayList<URI> contexts = new ArrayList<>();
+        ArrayList<java.net.URI> contexts = new ArrayList<>();
         Matcher m = p.matcher(sparqlQuery);
-        
+
         while (m.find()) {
-            contexts.add(new URIImpl(m.group(2)));
+            try {
+                contexts.add(new java.net.URI(m.group(2)));
+            } catch (URISyntaxException ex) {
+                Logger.getLogger(AbstractKAO.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
-        return (URI[]) contexts.toArray();
+        return (java.net.URI[]) contexts.toArray();
     }
 
     private void ArrayList(URI[] contexts) {
