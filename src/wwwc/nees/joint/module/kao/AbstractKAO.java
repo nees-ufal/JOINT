@@ -1,11 +1,16 @@
 package wwwc.nees.joint.module.kao;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.openrdf.model.URI;
+import org.openrdf.model.impl.URIImpl;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
@@ -30,14 +35,6 @@ public abstract class AbstractKAO {
     private QueryRunner queryRunner;
     // URI[] of graph to save triples
     private URI[] contexts;
-
-    public URI[] getContexts() {
-        return contexts;
-    }
-
-    public void setContexts(URI[] contexts) {
-        this.contexts = (contexts == null) ? new URI[]{} : contexts;
-    }
 
     // CONSTRUCTOR
     // -------------------------------------------------------------------------
@@ -100,6 +97,24 @@ public abstract class AbstractKAO {
             Logger.getLogger(AbstractKAO.class.getName()).log(Level.SEVERE, null, eR);
         }
         return (T) ob;
+    }
+
+    /**
+     * Retrieve contexts.
+     *
+     * @return a <code>URI[]</code> with contexts.
+     */
+    public URI[] getContexts() {
+        return contexts;
+    }
+
+    /**
+     * Set contexts.
+     *
+     * @param contexts a <code>URI[]</code> with contexts.
+     */
+    public void setContexts(URI[] contexts) {
+        this.contexts = (contexts == null) ? new URI[]{} : contexts;
     }
 
     /**
@@ -321,7 +336,9 @@ public abstract class AbstractKAO {
      * @return object <code>Object</code> result.
      */
     public Object executeSPARQLquerySingleResult(String query) {
-        return this.queryRunner.executeQueryAsSingleResult(query);
+        setContexts(this.retrieveContexts(query));
+
+        return this.queryRunner.executeQueryAsSingleResult(query, contexts);
     }
 
     /**
@@ -332,8 +349,8 @@ public abstract class AbstractKAO {
      *
      * @return <code>List<Object></code> a java.util.List with the results.
      */
-    public List executeSPARQLqueryResultList(String query, URI... contexts) {
-        setContexts(contexts);
+    public List executeSPARQLqueryResultList(String query) {
+        setContexts(this.retrieveContexts(query));
         return this.queryRunner.executeQueryAsList(query, this.getContexts());
     }
 
@@ -348,7 +365,17 @@ public abstract class AbstractKAO {
      * @return <code>Iterator<Object></code> a java.util.List with the results.
      */
     public Iterator executeQueryAsIterator(String query, URI... contexts) {
-        setContexts(contexts);
+        Set<URI> ctx = new HashSet<>();
+        
+        for (URI ctx1 : contexts) {
+            ctx.add(ctx1);
+        }
+        
+        for (URI ctx1 : this.retrieveContexts(query)) {
+            ctx.add(ctx1);
+        }
+        
+        setContexts((URI[]) ctx.toArray());
         return this.queryRunner.executeQueryAsIterator(query, this.getContexts());
     }
 
@@ -391,5 +418,25 @@ public abstract class AbstractKAO {
      */
     public Class<?> retrieveClass() {
         return this.classe;
+    }
+
+    /**
+     * Retrieve contexts from a sparql query.
+     * @param sparqlQuery a <code>String</code> with a sparql query.
+     * @return a <code>URI[]</code> with contexts.
+     */
+    public URI[] retrieveContexts(String sparqlQuery) {
+        Pattern p = Pattern.compile("([\\s]+from[\\s]+[\\<](.+)[\\>])");
+        ArrayList<URI> contexts = new ArrayList<>();
+        Matcher m = p.matcher(sparqlQuery);
+        
+        while (m.find()) {
+            contexts.add(new URIImpl(m.group(2)));
+        }
+        return (URI[]) contexts.toArray();
+    }
+
+    private void ArrayList(URI[] contexts) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

@@ -74,7 +74,7 @@ public class SPARQLQueryRunnerImpl implements QueryRunner {
     @Override
     public Object executeQueryAsSingleResult(String query, URI... contexts) {
         Object returnObject = null;
-
+        
         TupleQuery tupleQuery;
         try {
             RepositoryConnection conn = this.repository.getConnection();

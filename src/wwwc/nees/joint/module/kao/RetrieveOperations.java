@@ -203,7 +203,7 @@ public class RetrieveOperations {
         //calls the methods setURI and setLazyLoaded
         ((JOINTResource) obj).setURI(instanceName);
         ((JOINTResource) obj).setLazyLoaded(true);
-
+        
         //gets all methods of the desired class
         Method[] allMethodsClassImpl = classImpl.getMethods();
 

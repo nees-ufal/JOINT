@@ -190,7 +190,7 @@ public class AbstractKAOTest {
                 expected.add(p2);
             }
         }
-        List<Person> result = kao.executeSPARQLqueryResultList(query, graphs);
+        List<Person> result = kao.executeSPARQLqueryResultList(query);
         assertEquals(expected.size(), result.size());
     }
 
@@ -200,7 +200,7 @@ public class AbstractKAOTest {
     @Test
     public void testExecuteQueryAsIterator() {
         String query = "select ?s where {?s a foaf:Person.}";
-        List<Person> list_expected = new ArrayList<>(kao.executeSPARQLqueryResultList(query, graphs));
+        List<Person> list_expected = new ArrayList<>(kao.executeSPARQLqueryResultList(query));
 
         Person expected1 = kao.create(ontologyURI, instanceName + "1", graphs);
         Person expected2 = kao.create(ontologyURI, instanceName + "2", graphs);
