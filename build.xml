@@ -91,6 +91,9 @@
                             excludes="META-INF/*.SF, META-INF/*.DSA, META-INF/*.RSA"/>  
         </zip>
         <delete file="${store.dir}/temp_final.jar"/>
+        <exec dir="${store.dir}" executable="mvn">
+            <arg line =" install:install-file -Dfile=${application.title}-fat.jar -DartifactId=JOINT_beta -DgroupId=wwwc.nees.joint -Dversion=0.2 -Dpackaging=jar"></arg>
+        </exec>
     </target>
 
 
