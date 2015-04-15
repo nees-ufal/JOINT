@@ -209,6 +209,7 @@ public class RetrieveOperations {
 
         //retrieves all values of the properties of the instance
         List<Statement> statements = this.connection.getStatements(suj, null, null, true, contexts).asList();
+        System.out.println(statements);
         //creates a map to hold all values of the properties
         Map<String, List<Value>> mapProperties = this.sortPropertiesAndValues(statements);
 

@@ -1,15 +1,10 @@
 package wwwc.nees.joint.module.kao;
 
-import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.openrdf.model.URI;
 import org.openrdf.model.impl.URIImpl;
 import org.openrdf.repository.Repository;
@@ -37,8 +32,8 @@ public abstract class AbstractKAO {
     // URI[] of graph to save triples
     private URI[] contexts;
 
-    // CONSTRUCTOR
-    // -------------------------------------------------------------------------
+// CONSTRUCTOR
+// -------------------------------------------------------------------------
     /**
      * Class Constructor, starts the <code>Repository</code> and creates a
      * <code>ObjectConnection</code>, to do persistence operations.
@@ -135,32 +130,6 @@ public abstract class AbstractKAO {
                     .getName()).log(Level.SEVERE, null, eR);
         }
         return (T) ob;
-    }
-
-    /**
-     * Retrieve contexts.
-     *
-     * @return a <code>URI[]</code> with contexts.
-     */
-    public URI[] getContexts() {
-        return contexts;
-    }
-
-    /**
-     * Set contexts.
-     *
-     * @param contexts a <code>URI[]</code> with contexts.
-     */
-    public void setContexts(java.net.URI[] contexts) {
-        if (contexts == null) {
-            this.contexts = new URI[]{};
-        } else {
-            List<URI> uris = new ArrayList<>();
-            for (java.net.URI uri : contexts) {
-                uris.add(new URIImpl(uri.toString()));
-            }
-            this.contexts = uris.toArray(this.contexts);
-        }
     }
 
     /**
@@ -406,9 +375,7 @@ public abstract class AbstractKAO {
      * @return object <code>Object</code> result.
      */
     public Object executeSPARQLquerySingleResult(String query) {
-        setContexts(this.retrieveContexts(query));
-
-        return this.queryRunner.executeQueryAsSingleResult(query, contexts);
+        return this.queryRunner.executeQueryAsSingleResult(query);
     }
 
     /**
@@ -419,8 +386,8 @@ public abstract class AbstractKAO {
      *
      * @return <code>List<Object></code> a java.util.List with the results.
      */
-    public List executeSPARQLqueryResultList(String query) {
-        setContexts(this.retrieveContexts(query));
+    public List executeSPARQLqueryResultList(String query, java.net.URI... contexts) {
+        setContexts(contexts);
         return this.queryRunner.executeQueryAsList(query, this.getContexts());
     }
 
@@ -434,18 +401,8 @@ public abstract class AbstractKAO {
      *
      * @return <code>Iterator<Object></code> a java.util.List with the results.
      */
-    public Iterator executeQueryAsIterator(String query,java.net.URI... contexts) {
-        Set<java.net.URI> ctx = new HashSet<>();
-
-        for (java.net.URI ctx1 : contexts) {
-            ctx.add(ctx1);
-        }
-
-        for (java.net.URI ctx1 : this.retrieveContexts(query)) {
-            ctx.add(ctx1);
-        }
-
-        setContexts((java.net.URI[]) ctx.toArray());
+    public Iterator executeQueryAsIterator(String query, java.net.URI... contexts) {
+        setContexts(contexts);
         return this.queryRunner.executeQueryAsIterator(query, this.getContexts());
     }
 
@@ -490,28 +447,19 @@ public abstract class AbstractKAO {
         return this.classe;
     }
 
-    /**
-     * Retrieve contexts from a sparql query.
-     *
-     * @param sparqlQuery a <code>String</code> with a sparql query.
-     * @return a <code>URI[]</code> with contexts.
-     */
-    public java.net.URI[] retrieveContexts(String sparqlQuery) {
-        Pattern p = Pattern.compile("([\\s]+from[\\s]+[\\<](.+)[\\>])");
-        ArrayList<java.net.URI> contexts = new ArrayList<>();
-        Matcher m = p.matcher(sparqlQuery);
-
-        while (m.find()) {
-            try {
-                contexts.add(new java.net.URI(m.group(2)));
-            } catch (URISyntaxException ex) {
-                Logger.getLogger(AbstractKAO.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-        return (java.net.URI[]) contexts.toArray();
+    public URI[] getContexts() {
+        return contexts;
     }
 
-    private void ArrayList(URI[] contexts) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void setContexts(java.net.URI[] contexts) {
+        if (contexts == null) {
+            this.contexts = new URI[]{};
+        } else {
+            List<URI> uris = new ArrayList<>();
+            for (java.net.URI uri : contexts) {
+                uris.add(new URIImpl(uri.toString()));
+            }
+            this.contexts = uris.toArray(this.contexts);
+        }
     }
 }
