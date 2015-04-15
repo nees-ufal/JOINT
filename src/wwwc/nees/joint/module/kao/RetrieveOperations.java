@@ -256,7 +256,7 @@ public class RetrieveOperations {
                         if (this.datatypeManager.isDatatype(objValue)) {
                             //mapps to the an specific java native Class
                             method.invoke(obj, this.datatypeManager.
-                                    convertLiteralToDataype((Literal) objValue));
+                                    convertLiteralToDataype((Literal) objValue, parameterClassName));
                             //else it is an istance
                         } else {
                             //gets the class name from the triple store
@@ -407,14 +407,16 @@ public class RetrieveOperations {
                         if (!valueURI.isEmpty()) {
                             //if it is a datatype
                             if (this.datatypeManager.isDatatype(objValue)) {
-                                //mapps to the an specific java native Class
+                                //mapps to the an specific java native Class                                
                                 method.invoke(obj, this.datatypeManager.
-                                        convertLiteralToDataype((Literal) objValue));
+                                        convertLiteralToDataype((Literal) objValue, parameterClassName));
+//                                method.invoke(obj, this.datatypeManager.
+//                                        convertLiteralToDataype((Literal) objValue));
                                 //else it is an istance
                             } else {
                                 //gets the class name from the triple store
                                 parameterClassName = this.getClassFromBase(valueURI, contexts);
-                                //gets a new instance with its properties not loaded
+                                //gets a new instance with its properties not loaded                                
                                 method.invoke(obj, this.
                                         getNotLoadedObject(valueURI, parameterClassName));
                             }

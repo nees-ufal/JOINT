@@ -42,7 +42,6 @@ public class UpdateOperations {
     }
 
     public Literal convertDatatype(String value, String className) {
-
         if (className.equals(BOOLEAN)) {
             return this.f.createLiteral(Boolean.parseBoolean(value));
         } else if (className.equals(INTEGER)) {
@@ -126,6 +125,7 @@ public class UpdateOperations {
                 } else {
                     //percorre a lista
                     for (Object ob : returnSet) {
+
                         URI uriObj = f.createURI(ob.toString());
 
                         updSts.add(f.createStatement(suj, pred, uriObj));
