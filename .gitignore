@@ -27,3 +27,4 @@ nb-configuration.xml
 project.properties
 .nb-gradle/
 store/
+nbbuild.xml
