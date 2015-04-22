@@ -41,11 +41,6 @@ public class RetrieveOperations {
     private static final String SUF_IMPL_CLASS = "Impl";
     private GraphQueryConstruct graphQueryConstruct;
 
-    /*Removed */
-//    public RetrieveOperations() {
-//        this.packages = ConceptsPackageInfo.getPackagesInfo(this.getClass());
-//        this.datatypeManager = DatatypeManager.getInstance();
-//    }
     public RetrieveOperations(RepositoryConnection connection) {
         this.packages = ConceptsPackageInfo.getPackagesInfo(this.getClass());
         this.datatypeManager = DatatypeManager.getInstance();
@@ -408,7 +403,7 @@ public class RetrieveOperations {
                         if (!valueURI.isEmpty()) {
                             //if it is a datatype
                             if (this.datatypeManager.isDatatype(objValue)) {
-                                //mapps to the an specific java native Class                                
+                                //mapps to the an specific java native Class                                 
                                 method.invoke(obj, this.datatypeManager.
                                         convertLiteralToDataype((Literal) objValue, parameterClassName));
 //                                method.invoke(obj, this.datatypeManager.

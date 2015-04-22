@@ -34,7 +34,6 @@ public class DatatypeManager {
     private final String OBJECT_NS = "java:Object";
     private final String DATETIME_CLASS = "javax.xml.datatype.XMLGregorianCalendar";
     private final String DATETIME_NS = "http://www.w3.org/2001/XMLSchema#dateTime";
-//    private Map<String, Class> namespacesClass;
     private BidiMap<String, Class> namespacesClass;
 
     // VARIABLES
@@ -60,14 +59,14 @@ public class DatatypeManager {
 
     private DatatypeManager() {
         try {
-//            namespacesClass = new HashMap<>();
             namespacesClass = new DualHashBidiMap<>();
             namespacesClass.put(BOOLEAN_NS, Class.forName(BOOLEAN_CLASS));
             namespacesClass.put(INTEGER_NS, Class.forName(INTEGER_CLASS));
             namespacesClass.put(FLOAT_NS, Class.forName(FLOAT_CLASS));
             namespacesClass.put(DATETIME_NS, Class.forName(DATETIME_CLASS));
             namespacesClass.put(STRING_NS, Class.forName(STRING_CLASS));
-            namespacesClass.put(DECIMAL_NS, Class.forName(DECIMAL_CLASS));
+            // estava sobrescrevendo a chave FLOAT_NS
+            // namespacesClass.put(DECIMAL_NS, Class.forName(DECIMAL_CLASS));
             namespacesClass.put(DOUBLE_NS, Class.forName(DOUBLE_CLASS));
         } catch (ClassNotFoundException ex) {
             Logger.getLogger(DatatypeManager.class.getName()).log(Level.SEVERE, null, ex);
@@ -194,6 +193,7 @@ public class DatatypeManager {
         String datatype;
         if (dType == null) {
             String className = namespacesClass.getKey(Class.forName(parameterClassName));
+
             if (className != null) {
                 datatype = className;
             } else {
