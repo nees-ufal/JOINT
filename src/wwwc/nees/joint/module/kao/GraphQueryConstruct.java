@@ -62,6 +62,52 @@ public class GraphQueryConstruct {
         return statements;
     }
 
+    public List<Statement> getStatementsByGraphQuery_withContext(String subj, String property, String obj, URI... contexts)
+            throws Exception, NullPointerException {
+
+        StringBuilder query = new StringBuilder();
+
+        //Build the query to retrieve the requested elements (?s ?p ?o) where
+        // Sets the context of the instance
+        query.append("SELECT ?s ?p ?o ?g WHERE { ");
+
+        if (contexts.length != 0) {
+            query.append("VALUES ?g {");
+            for (URI context : contexts) {
+                query.append(" <").append(context.toString()).append("> ");
+            }
+            query.append("} ");
+        }
+
+        query.append("GRAPH ?g {");
+
+        if (subj != null) {//If subj isn't equals null, add values tag to ?s with subj in the query
+            query.append("VALUES ?s {<").append(subj).append(">} ");
+        }
+
+        if (property != null) {
+            query.append("VALUES ?p {<").append(property).append(">} ");
+            
+        }
+
+        if (obj != null) {//If obj isn't equals null, add values tag to ?o with obj in the query
+            query.append("VALUES ?o {<").append(obj).append(">}");            
+        }
+
+        //Query to retrieve the informations (?s ?p ?o)
+        //Ends tag of the context
+        query.append(" ?s ?p ?o.} }");
+        //evaluate the graph result
+        GraphQuery prepareGraphQuery = this.connection.prepareGraphQuery(QueryLanguage.SPARQL, query.toString());
+        GraphQueryResult graphResult = prepareGraphQuery.evaluate();
+
+        //Creating a list of statetments with graph query result results
+        List<Statement> statements = Iterations.asList(graphResult);
+        graphResult.close();
+
+        return statements;
+    }
+
     public List<Statement> getStatementsByGraphQuery_withContext(List<String> subj, List<String> property, List<String> obj, URI... contexts)
             throws Exception, NullPointerException {
 

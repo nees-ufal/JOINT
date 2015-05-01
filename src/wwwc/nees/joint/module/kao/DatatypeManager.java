@@ -193,7 +193,6 @@ public class DatatypeManager {
         String datatype;
         if (dType == null) {
             String className = namespacesClass.getKey(Class.forName(parameterClassName));
-
             if (className != null) {
                 datatype = className;
             } else {

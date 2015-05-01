@@ -198,13 +198,13 @@ public class RetrieveOperations {
         //calls the methods setURI and setLazyLoaded
         ((JOINTResource) obj).setURI(instanceName);
         ((JOINTResource) obj).setLazyLoaded(true);
-        
+
         //gets all methods of the desired class
         Method[] allMethodsClassImpl = classImpl.getMethods();
 
         //retrieves all values of the properties of the instance
-        List<Statement> statements = this.connection.getStatements(suj, null, null, true, contexts).asList();
-        System.out.println(statements);
+        List<Statement> statements = graphQueryConstruct.getStatementsByGraphQuery_withContext(suj.toString(), null, null, contexts);
+//        List<Statement> statements = this.connection.getStatements(suj, null, null, true, contexts).asList();
         //creates a map to hold all values of the properties
         Map<String, List<Value>> mapProperties = this.sortPropertiesAndValues(statements);
 
