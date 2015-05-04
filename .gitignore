@@ -28,3 +28,4 @@ project.properties
 .nb-gradle/
 store/
 nbbuild.xml
+/JOINT/nbproject/private/

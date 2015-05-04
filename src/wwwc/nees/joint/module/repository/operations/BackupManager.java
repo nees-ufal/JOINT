@@ -16,14 +16,18 @@ import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
 import org.openrdf.model.Value;
 import org.openrdf.model.ValueFactory;
+import org.openrdf.query.GraphQueryResult;
+import org.openrdf.query.QueryEvaluationException;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
 import org.openrdf.repository.RepositoryResult;
 import org.openrdf.repository.http.HTTPRepository;
+import wwwc.nees.joint.module.kao.GraphQueryConstruct;
+import wwwc.nees.joint.module.kao.RepositoryFactory;
 
 /**
- *  Manager for backuping data from the repository
+ * Manager for backuping data from the repository
  *
  * @author Olavo Holanda
  * @version 1.0 - 15/01/2012
@@ -43,15 +47,20 @@ public class BackupManager {
     private static final String ORI_CON_TOKEN = "<context>";
     private static final String FIN_CON_TOKEN = "</context>";
 
+    private final Repository repository;
+
+    public BackupManager() {
+        repository = RepositoryFactory.getRepository();
+    }
+
     // METHODS -----------------------------------------------------------------
     /**
-     * Copies all data from one repository to others.
-     * Be carefull, this will erase all data of the others.
+     * Copies all data from one repository to others. Be carefull, this will
+     * erase all data of the others.
      *
-     * @param mainURL
-     *            the main repository URL with the data to be copied
-     * @param repositories
-     *            the repositories urls where the data will be copied to
+     * @param mainURL the main repository URL with the data to be copied
+     * @param repositories the repositories urls where the data will be copied
+     * to
      */
     public void copyRepository(String mainRepository, String... urls) {
 
@@ -95,18 +104,13 @@ public class BackupManager {
     /**
      * Creates a backup file of the repository with the path specified
      *
-     * @param url
-     *            the main repository URL
-     * @param path
-     *            the backup file path
+     * @param filePath the backup file path
      */
-    public void backupRepository(String repositoryURL, String filePath) {
+    public void backupRepository(String filePath) {
         // Gets the main repository
-        Repository mainRepo = new HTTPRepository(repositoryURL);
         try {
             // Retrieves the connection of the main one
-            RepositoryConnection mainCon = mainRepo.getConnection();
-
+            RepositoryConnection connection = repository.getConnection();
             File file = new File(filePath);
 
             if (file.exists()) {
@@ -115,39 +119,39 @@ public class BackupManager {
             } else {
                 file.createNewFile();
             }
+            GregorianCalendar calendar = new GregorianCalendar();
+            Logger.getLogger("Joint Backup Manager - Date and Time: " + calendar.getTime().toString());
+
             FileWriter writer = new FileWriter(file);
             PrintWriter print = new PrintWriter(writer, true);
 
-            RepositoryResult<Statement> result = mainCon.getStatements((Resource) null, null, null, true);
-            GregorianCalendar calendar = new GregorianCalendar();
-            print.println("Joint Backup Manager - Date and Time: "
-                    + calendar.getTime().toString() + " - Repository: " + repositoryURL);
+            GraphQueryConstruct queryContruct = new GraphQueryConstruct(connection);
+            GraphQueryResult result = queryContruct.getStatementsAsGraphQuery((String) null, null, null);
             while (result.hasNext()) {
                 Statement t = result.next();
                 String line = this.generateStatementLine(t);
                 print.println(line);
             }
+            result.close();
             print.close();
             writer.close();
+            Logger.getLogger("File Joint Backup was stored in " + file.getCanonicalPath());
 
-            mainCon.close();
-            mainRepo.shutDown();
-
-        } catch (RepositoryException ex) {
+            connection.close();
+            
+        } catch (QueryEvaluationException | RepositoryException | IOException ex) {
             Logger.getLogger(BackupManager.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            Logger.getLogger(BackupManager.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (Exception e) {
+            Logger.getLogger(BackupManager.class.getName()).log(Level.SEVERE, null, e);
         }
     }
 
     /**
-     * Restores the backup file to the repository. This will erase any
-     * previous data in the repository
+     * Restores the backup file to the repository. This will erase any previous
+     * data in the repository
      *
-     * @param url
-     *            the main repository URL
-     * @param path
-     *            the backup file path
+     * @param repositoryURL the main repository URL
+     * @param filePath the backup file path
      */
     public void restoreBackup(String repositoryURL, String filePath) {
         // Gets the main repository
@@ -211,10 +215,8 @@ public class BackupManager {
     /**
      * Creates a String representing one statement
      *
-     * @param statement
-     *            a Statement
-     * @return line
-     *            the string representing a statement line
+     * @param statement a Statement
+     * @return line the string representing a statement line
      */
     private String generateStatementLine(Statement sta) {
         StringBuilder builder = new StringBuilder();
@@ -238,10 +240,8 @@ public class BackupManager {
     /**
      * Retrieves the content inserted between the statement tokens
      *
-     * @param line
-     *            a Statement line
-     * @return content
-     *            the string between statement tokens
+     * @param line a Statement line
+     * @return content the string between statement tokens
      */
     private String retrievesLineStatement(String line) {
 
@@ -273,10 +273,8 @@ public class BackupManager {
     /**
      * Retrieves the content inserted between the subject tokens
      *
-     * @param line
-     *            a Statement line
-     * @return content
-     *            the string between subject tokens
+     * @param line a Statement line
+     * @return content the string between subject tokens
      */
     private String retrievesLineSubject(String line) {
 
@@ -308,10 +306,8 @@ public class BackupManager {
     /**
      * Retrieves the content inserted between the predicate tokens
      *
-     * @param line
-     *            a Statement line
-     * @return content
-     *            the string between predicate tokens
+     * @param line a Statement line
+     * @return content the string between predicate tokens
      */
     private String retrievesLinePredicate(String line) {
 
@@ -343,10 +339,8 @@ public class BackupManager {
     /**
      * Retrieves the content inserted between the object tokens
      *
-     * @param line
-     *            a Statement line
-     * @return content
-     *            the string between object tokens
+     * @param line a Statement line
+     * @return content the string between object tokens
      */
     private String retrievesLineObject(String line) {
 
@@ -378,10 +372,8 @@ public class BackupManager {
     /**
      * Retrieves the content inserted between the context tokens
      *
-     * @param line
-     *            a Statement line
-     * @return content
-     *            the string between context tokens
+     * @param line a Statement line
+     * @return content the string between context tokens
      */
     private String retrievesLineContext(String line) {
 
@@ -413,12 +405,9 @@ public class BackupManager {
     /**
      * Creates the Resource which represents a subject
      *
-     * @param subject
-     *            the string with the subject (an URI)
-     * @param factory
-     *            the ValueFactory of the repository connection
-     * @return resource
-     *            the Resource which represents a subject
+     * @param subject the string with the subject (an URI)
+     * @param factory the ValueFactory of the repository connection
+     * @return resource the Resource which represents a subject
      */
     private Resource getSubjectResource(String subject, ValueFactory f) {
 
@@ -445,12 +434,9 @@ public class BackupManager {
     /**
      * Creates the URI which represents a predicate
      *
-     * @param predicate
-     *            the string representing an URI with the predicate
-     * @param factory
-     *            the ValueFactory of the repository connection
-     * @return uri
-     *            the URI which represents a predicate
+     * @param predicate the string representing an URI with the predicate
+     * @param factory the ValueFactory of the repository connection
+     * @return uri the URI which represents a predicate
      */
     private URI getPredicateURI(String predicate, ValueFactory f) {
 
@@ -471,12 +457,9 @@ public class BackupManager {
     /**
      * Creates the Value which represents an object
      *
-     * @param object
-     *            the string with the object (an URI)
-     * @param factory
-     *            the ValueFactory of the repository connection
-     * @return value
-     *            the Value which represents an object
+     * @param object the string with the object (an URI)
+     * @param factory the ValueFactory of the repository connection
+     * @return value the Value which represents an object
      */
     private Value getObjectValue(String object, ValueFactory f) {
         // Checks if it is a blank node
@@ -500,12 +483,9 @@ public class BackupManager {
     /**
      * Creates the Resource which represents a context
      *
-     * @param context
-     *            the string with the context (an URI)
-     * @param factory
-     *            the ValueFactory of the repository connection
-     * @return resource
-     *            the Resource which represents a context
+     * @param context the string with the context (an URI)
+     * @param factory the ValueFactory of the repository connection
+     * @return resource the Resource which represents a context
      */
     private Resource getContextResource(String context, ValueFactory f) {
         // Checks if it is an URI

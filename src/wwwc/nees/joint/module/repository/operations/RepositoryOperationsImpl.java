@@ -119,8 +119,8 @@ public class RepositoryOperationsImpl implements RepositoryOperations{
      * @param path
      *            the backup file path
      */
-    public void backupRepository(String repositoryURL, String filePath){
-        this.backupMgr.backupRepository(repositoryURL, filePath);
+    public void backupRepository(String filePath){
+        this.backupMgr.backupRepository(filePath);
     }
 
     /**

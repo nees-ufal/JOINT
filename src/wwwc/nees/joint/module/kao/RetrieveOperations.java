@@ -18,6 +18,7 @@ import org.openrdf.model.URI;
 import org.openrdf.model.Value;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.vocabulary.RDF;
+import org.openrdf.query.GraphQueryResult;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryResult;
 import wwwc.nees.joint.model.JOINTResource;
@@ -203,7 +204,7 @@ public class RetrieveOperations {
         Method[] allMethodsClassImpl = classImpl.getMethods();
 
         //retrieves all values of the properties of the instance
-        List<Statement> statements = graphQueryConstruct.getStatementsByGraphQuery_withContext(suj.toString(), null, null, contexts);
+        List<Statement> statements = graphQueryConstruct.getStatementsAsList(suj.toString(), null, null, contexts);
 //        List<Statement> statements = this.connection.getStatements(suj, null, null, true, contexts).asList();
         //creates a map to hold all values of the properties
         Map<String, List<Value>> mapProperties = this.sortPropertiesAndValues(statements);
@@ -322,7 +323,7 @@ public class RetrieveOperations {
 
         //constructs a query to get all information about the objects that will
         //be parsed
-        Iterator<Statement> stts = graphQueryConstruct.getStatementsByGraphQuery_withContext(instancesName, null, null, contexts).iterator();
+        GraphQueryResult stts = graphQueryConstruct.getStatementsAsGraphQuery(instancesName, null, null, contexts);
         //creates a map with key - uri/object - list of statements
         Map<String, List<Statement>> cInformation = new HashMap<>();
         //iterates the previous graph result
