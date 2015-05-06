@@ -346,7 +346,7 @@ public class RetrieveOperations {
                 cInformation.get(uri).add(st);
             }
         }
-
+        stts.close();
         for (String instanceURI : instancesName) {
 
             //creates an instance with the concrete class
