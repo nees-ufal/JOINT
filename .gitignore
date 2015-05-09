@@ -29,3 +29,6 @@ project.properties
 store/
 nbbuild.xml
 /JOINT/nbproject/private/
+lib/junit-2/
+lib/junit/
+lib/nblibraries.properties
