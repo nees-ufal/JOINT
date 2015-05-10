@@ -5,7 +5,6 @@ import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import wwwc.nees.joint.facade.RepositoryFacade;
 import wwwc.nees.joint.module.ontology.operations.OntologyCompiler;
 
 /**
@@ -14,34 +13,33 @@ import wwwc.nees.joint.module.ontology.operations.OntologyCompiler;
 public class OntologyCompilerTest {
 
     private String path_target;
-    private String path_source_pizza;
-    private String path_source_SIOC;
     private List<String> path_sources = new ArrayList<>();
-    private RepositoryFacade facade;
     private OntologyCompiler compiler;
+    private String base_path = System.getProperty("user.dir");
 
     @Before
     public void setUp() {
-        path_target = "/home/williams/codeGenerateTest.jar";
-        path_source_pizza = "http://www.dcs.bbk.ac.uk/~michael/sw/slides/pizza.owl";
-        path_source_SIOC = "http://rdfs.org/sioc/ns#";
-        facade = new RepositoryFacade();
+        path_target = base_path+"/dist/codeGenerateTest.jar";
+        
+        //Adding ontologies
+        path_sources.add("http://www.dcs.bbk.ac.uk/~michael/sw/slides/pizza.owl"); // Pizza Ontology
+        path_sources.add("http://rdfs.org/sioc/ns#"); // SIOC Ontology
+        path_sources.add("http://nees.com.br/linkn/onto/osm/"); // OSM Ontology
+        path_sources.add("http://www.w3.org/2004/02/skos/core#"); // SKOS Ontology
+        path_sources.add("http://swat.cse.lehigh.edu/onto/univ-bench.owl"); // Univ-Bench Ontology
+        path_sources.add("http://schema.rdfs.org/all.rdf"); // Schema.org Ontology
     }
 
     @After
     public void tearDown() {
         path_target = null;
-        path_source_pizza = null;
         path_sources.clear();
-        facade = null;
         compiler = null;
     }
 
     @Test
     public void codeGenerate() {
-//        path_sources.add(path_source_pizza);
-        path_sources.add(path_source_SIOC);
-        compiler = facade.getOntologyCompiler(path_target, path_sources);
+        compiler = new OntologyCompiler(path_target, path_sources);
         compiler.compile();
     }
 }

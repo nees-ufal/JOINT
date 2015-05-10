@@ -52,6 +52,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Level;
 
 import wwwc.nees.joint.compiler.annotations.Iri;
 import wwwc.nees.joint.compiler.model.rdf.Model;
@@ -352,11 +353,12 @@ public class OWLCompiler {
      * Build concepts and behaviours, compile them and save them to this jar
      * file
      *
+     * @param jar
+     * @throws wwwc.nees.joint.compiler.exceptions.ObjectStoreConfigException
      * @throws IllegalArgumentException if no concepts found
      * @return a ClassLoader with in jar included
      */
-    public ClassLoader createJar(File jar) throws RepositoryException,
-            ObjectStoreConfigException {
+    public ClassLoader createJar(File jar) throws ObjectStoreConfigException {
         try {
             File target = createTempDir(getClass().getSimpleName());
             compile(target);
@@ -366,11 +368,12 @@ public class OWLCompiler {
             return new URLClassLoader(new URL[]{jar.toURI().toURL()}, cl);
         } catch (ObjectStoreConfigException e) {
             throw e;
-        } catch (RepositoryException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new RepositoryException(e);
+        } catch (IOException ex) {
+            java.util.logging.Logger.getLogger(OWLCompiler.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (Exception ex) {
+            java.util.logging.Logger.getLogger(OWLCompiler.class.getName()).log(Level.SEVERE, null, ex);
         }
+        return null;
     }
 
     /**
