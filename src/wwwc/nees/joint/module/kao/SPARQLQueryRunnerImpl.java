@@ -74,7 +74,7 @@ public class SPARQLQueryRunnerImpl implements QueryRunner {
     @Override
     public Object executeQueryAsSingleResult(String query, URI... contexts) {
         Object returnObject = null;
-        
+
         TupleQuery tupleQuery;
         try {
             RepositoryConnection conn = this.repository.getConnection();
@@ -303,7 +303,7 @@ public class SPARQLQueryRunnerImpl implements QueryRunner {
                                 //adds in the collection
                                 literals.add(lit);
                             }
-
+                            result.close();
                             //returns the collection already parsed
                             return this.datatypeManager.convertCollectionOfLiteralToDataypes(literals);
                         } else {
@@ -322,36 +322,12 @@ public class SPARQLQueryRunnerImpl implements QueryRunner {
                                 //adds in the collection
                                 instancesURI.add(uri);
                             }
-
+                            result.close();
                             return this.retrieveOp.convertCollectionOriginalForImpl(instancesURI, Class.forName(className), contexts);
                         }
                     }
-
-//                    while (result.hasNext()) {
-//                        BindingSet binSet = result.next();
-//
-//                        Value re = binSet.iterator().next().getValue();
-//                        if (!identified) {
-//                            if (re instanceof Literal) {
-//                                resultList.add(datatypeManager.convertLiteralToDataype((Literal) re));
-//                                identified = true;
-//                                literal = true;
-//                            } else {
-//                                className = this.retrieveOp.getClassFromBase(re.stringValue());
-//                                resultList.add(this.retrieveOp.convertOriginalForImpl(re.stringValue(), Class.forName(className)));
-//                                identified = true;
-//                                literal = false;
-//                            }
-//                        } else {
-//                            if (literal) {
-//                                resultList.add(datatypeManager.convertLiteralToDataype((Literal) re));
-//                            } else {
-//                                resultList.add(this.retrieveOp.convertOriginalForImpl(re.stringValue(), Class.forName(className)));
-//                            }
-//                        }
-//                    }
                 }
-
+                result.close();
                 conn.commit();
             } catch (Exception e) {
                 conn.rollback();
@@ -364,7 +340,6 @@ public class SPARQLQueryRunnerImpl implements QueryRunner {
             Logger.getLogger(SPARQLQueryRunnerImpl.class.getName()).
                     log(Level.SEVERE, null, eR);
         }
-
         return resultList;
     }
 

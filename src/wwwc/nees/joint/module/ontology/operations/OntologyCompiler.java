@@ -46,7 +46,8 @@ public class OntologyCompiler {
      * desired ontologies and the ontologies to be compiled
      *
      * @param path the path to the Jar file
-     * @param ontologiesURLs the List of ontologies urls (either a remote or local file)
+     * @param ontologiesURLs the List of ontologies urls (either a remote or
+     * local file)
      */
     public OntologyCompiler(String path, List<String> ontologiesURLs) {
         jarFile = new File(path);
@@ -86,7 +87,7 @@ public class OntologyCompiler {
 
             //Compile the specified ontologies in the desired jar file
             converter.createJar(jarFile);
-        } catch (RepositoryException | ObjectStoreConfigException e) {
+        } catch (ObjectStoreConfigException e) {
             Logger.getLogger(OntologyCompiler.class.getName()).
                     log(Level.SEVERE, null, e);
         }

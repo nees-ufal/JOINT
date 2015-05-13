@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -106,9 +105,8 @@ public class RetrieveOperations {
         RepositoryResult<Statement> statements = this.connection.getStatements(sub, RDF.TYPE, null, true, contexts);
         //Preparar a query para recuperar o tipo de instancia
         while (statements.hasNext()) {
-            Statement st = statements.next();
+            String uriObj = statements.next().getObject().stringValue();
             statements.close();
-            String uriObj = st.getObject().stringValue();
             String nameClasse = this.packages.get(uriObj);
             if (nameClasse == null) {
                 return OBJECT_CLASS;
@@ -205,7 +203,6 @@ public class RetrieveOperations {
 
         //retrieves all values of the properties of the instance
         List<Statement> statements = graphQueryConstruct.getStatementsAsList(suj.toString(), null, null, contexts);
-//        List<Statement> statements = this.connection.getStatements(suj, null, null, true, contexts).asList();
         //creates a map to hold all values of the properties
         Map<String, List<Value>> mapProperties = this.sortPropertiesAndValues(statements);
 
@@ -296,7 +293,7 @@ public class RetrieveOperations {
         }
         //calls the setInnerModifiedFields to erase the modified fields
         //of the instance (update mechanics)
-        ((JOINTResource) obj).setInnerModifiedFields(new ArrayList<String>());
+        ((JOINTResource) obj).setInnerModifiedFields(new ArrayList<>());
         return obj;
     }
 
