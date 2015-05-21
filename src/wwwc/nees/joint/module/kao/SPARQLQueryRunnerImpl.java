@@ -1,5 +1,8 @@
 package wwwc.nees.joint.module.kao;
 
+import info.aduna.iteration.Iterations;
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
 import wwwc.nees.joint.model.OWLUris;
 import wwwc.nees.joint.model.RDFUris;
 import wwwc.nees.joint.model.SWRLUris;
@@ -11,17 +14,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.openrdf.model.Literal;
+import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
 import org.openrdf.model.Value;
+import org.openrdf.model.vocabulary.RDF;
 import org.openrdf.query.Binding;
 import org.openrdf.query.BindingSet;
-
 import org.openrdf.query.BooleanQuery;
+import org.openrdf.query.GraphQuery;
+import org.openrdf.query.GraphQueryResult;
+import org.openrdf.query.MalformedQueryException;
+import org.openrdf.query.QueryEvaluationException;
 import org.openrdf.query.QueryLanguage;
 import org.openrdf.query.TupleQuery;
 import org.openrdf.query.TupleQueryResult;
 import org.openrdf.query.Update;
+import org.openrdf.query.resultio.sparqljson.SPARQLResultsJSONWriter;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
@@ -341,6 +352,114 @@ public class SPARQLQueryRunnerImpl implements QueryRunner {
                     log(Level.SEVERE, null, eR);
         }
         return resultList;
+    }
+
+    @Override
+    public List<Object> executeQueryAsList2(String query, URI... contexts) {
+
+        // Creates a java.util.List
+        List<Object> resultList = new ArrayList<>();
+        try {
+
+            // Gets a connection from repository
+            RepositoryConnection conn = this.repository.getConnection();
+            // initiates the transaction
+            conn.setAutoCommit(false);
+            // calls the manager from retrieve operations
+
+            GraphQueryResult result;
+
+            String clause_PREFIX = "";
+            StringBuilder queryBuilder = new StringBuilder();
+            try {
+                if (query.startsWith("PREFIX")) {
+                    Pattern patter_PREFIX = Pattern.compile("(([\\s]?)(PREFIX)([\\s]+)([\\w]+)(\\:)(<([a-zA-Z]{3,})://([\\w-]+\\.)+[\\w-]+(/[\\w- ./?%&=]*)?>))+");
+                    Matcher matcher_PREFIX = patter_PREFIX.matcher(query);
+                    if (matcher_PREFIX.find()) {
+                        clause_PREFIX = matcher_PREFIX.group();
+                        queryBuilder.append(clause_PREFIX);
+                        query = query.replace(clause_PREFIX, "");
+                    }
+                }
+                Pattern pattern_SELECT = Pattern.compile("(\\s+\\?[^\\s]+)");
+                Matcher matcher_SELECT = pattern_SELECT.matcher(query);
+                if (matcher_SELECT.find()) {
+                    String group = matcher_SELECT.group();
+
+                    queryBuilder.append(" CONSTRUCT {").append(group).append(" ?p ?o} WHERE{")
+                            .append(group).append(" ?p ?o{")
+                            .append(query).append("}}");
+
+                }
+                // Creates the query based on the parameter
+                GraphQuery graphQuery = conn.prepareGraphQuery(QueryLanguage.SPARQL, queryBuilder.toString());
+
+                // Performs the query
+                result = graphQuery.evaluate();
+                List<Statement> resultado = Iterations.asList(result);
+                result.close();
+                String className = "";
+                this.retrieveOp = new RetrieveOperations(conn);
+                for (Statement st : resultado) {
+                    if (st.getPredicate().toString().equals(RDF.TYPE.toString())) {
+                        className = retrieveOp.getClassFromBase1(st.getObject().stringValue());
+                        result.close();
+                        break;
+                    }
+                }
+                return this.retrieveOp.convertCollectionOriginalForImpl3(resultado, Class.forName(className), contexts);
+            } catch (RepositoryException | MalformedQueryException | QueryEvaluationException e) {
+                conn.rollback();
+                Logger.getLogger(SPARQLQueryRunnerImpl.class.getName()).
+                        log(Level.SEVERE, null, e);
+
+            } catch (ClassNotFoundException ex) {
+                Logger.getLogger(SPARQLQueryRunnerImpl.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (Exception ex) {
+                Logger.getLogger(SPARQLQueryRunnerImpl.class.getName()).log(Level.SEVERE, null, ex);
+            } finally {
+                conn.close();
+
+            }
+        } catch (RepositoryException eR) {
+            Logger.getLogger(SPARQLQueryRunnerImpl.class.getName()).
+                    log(Level.SEVERE, null, eR);
+        }
+        return resultList;
+    }
+
+    @Override
+    public OutputStream executeQueryAsJSON(String query) {
+        // Creates a java.util.List
+        ByteArrayOutputStream resultsJSON = new ByteArrayOutputStream();
+
+        SPARQLResultsJSONWriter jsonWriter = new SPARQLResultsJSONWriter(resultsJSON);
+        try {
+            // Gets a connection from repository            
+            RepositoryConnection conn = this.repository.getConnection();
+            // initiates the transaction
+            conn.setAutoCommit(false);
+            try {
+                // Creates the query based on the parameter
+                TupleQuery graphQuery = conn.prepareTupleQuery(QueryLanguage.SPARQL, query);
+
+                // Performs the query
+                graphQuery.evaluate(jsonWriter);
+
+            } catch (RepositoryException | MalformedQueryException | QueryEvaluationException e) {
+                conn.rollback();
+                Logger.getLogger(SPARQLQueryRunnerImpl.class.getName()).
+                        log(Level.SEVERE, null, e);
+
+            } finally {
+                conn.close();
+                return resultsJSON;
+            }
+        } catch (RepositoryException eR) {
+            Logger.getLogger(SPARQLQueryRunnerImpl.class.getName()).
+                    log(Level.SEVERE, null, eR);
+            return resultsJSON;
+        }
     }
 
     /**

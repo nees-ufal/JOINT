@@ -1,5 +1,6 @@
 package wwwc.nees.joint.module.kao;
 
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -389,6 +390,15 @@ public abstract class AbstractKAO {
     public List executeSPARQLqueryResultList(String query, java.net.URI... contexts) {
         setContexts(contexts);
         return this.queryRunner.executeQueryAsList(query, this.getContexts());
+    }
+
+    public List executeSPARQLqueryResultList2(String query, java.net.URI... contexts) {
+        setContexts(contexts);
+        return this.queryRunner.executeQueryAsList2(query, this.getContexts());
+    }
+
+    public String executeSPARQLqueryResultAsJSONString(String query) {
+        return this.queryRunner.executeQueryAsJSON(query).toString();
     }
 
     /**

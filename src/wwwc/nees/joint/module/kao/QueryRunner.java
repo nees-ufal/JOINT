@@ -1,5 +1,6 @@
 package wwwc.nees.joint.module.kao;
 
+import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.List;
 import org.openrdf.model.URI;
@@ -32,6 +33,10 @@ public interface QueryRunner {
      * @return <code>List<Object></code> a java.util.List with the results.
      */
     public List<Object> executeQueryAsList(String query, URI... contexts);
+
+    public List<Object> executeQueryAsList2(String query, URI... contexts);
+
+    public OutputStream executeQueryAsJSON(String query);
 
     /**
      * Performs queries in the repository, returning a java.util.Iterator with

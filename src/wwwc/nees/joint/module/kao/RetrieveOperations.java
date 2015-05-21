@@ -23,7 +23,6 @@ import org.openrdf.repository.RepositoryResult;
 import wwwc.nees.joint.model.JOINTResource;
 
 /**
- *
  * @author Olavo
  */
 public class RetrieveOperations {
@@ -115,6 +114,14 @@ public class RetrieveOperations {
         }
         statements.close();
         return OBJECT_CLASS;
+    }
+
+    public String getClassFromBase1(String obj) throws Exception {
+        String nameClasse = this.packages.get(obj);
+        if (nameClasse == null) {
+            return OBJECT_CLASS;
+        }
+        return nameClasse;
     }
 
     private Object createJOINTResourceObject(String instanceName) {
@@ -585,15 +592,142 @@ public class RetrieveOperations {
 
                 //invokes the method with the converted parameter
                 setterMethod.invoke(o, set);
-                
+
                 //calls the setInnerModifiedFields to erase the modified fields
                 //of the instance (update mechanics)
                 ((JOINTResource) o).setInnerModifiedFields(new ArrayList<String>());
-                
+
             }
             result.put(subjectURI, o);
         }
         stts.close();
+        return new ArrayList<>(result.values());
+    }
+
+    public List<Object> convertCollectionOriginalForImpl3(List<Statement> graphQuery, Class clazz, URI... contexts) throws Exception {
+        HashMap<String, Object> result = new HashMap<>();
+        HashMap<String, List<Method>> methodMap = new HashMap<>();
+
+        //constructs a query to get all information about the objects that will
+        //be parsed
+        //gets the concrete desired class
+        Class classImpl = Class.forName(clazz.getName() + SUF_IMPL_CLASS);
+
+        //gets all methods of the concrete class
+        Method[] allMethodsClassImpl = classImpl.getMethods();
+
+        //populating map between IRI and methods of concrete class
+        for (Method m : allMethodsClassImpl) {
+            try {
+                String propertyURI = m.getAnnotation(Iri.class).value();
+                List<Method> mList = (methodMap.containsKey(propertyURI)) ? methodMap.get(propertyURI) : new ArrayList<Method>();
+                mList.add(m);
+                methodMap.put(propertyURI, mList);
+            } catch (NullPointerException e) {
+            }
+        }
+
+        //iterates the previous graph result
+        for (Statement statement : graphQuery) {
+            if (!methodMap.containsKey(statement.getPredicate().toString())) {
+                continue;
+            }
+            String subjectURI = statement.getSubject().stringValue();
+
+            Object o = null;
+            if (!result.containsKey(subjectURI)) {
+                o = classImpl.newInstance();
+
+                //casts the object to the upper class JOINTResource and
+                //calls the methods setURI and setLazyLoaded
+                ((JOINTResource) o).setURI(subjectURI);
+                ((JOINTResource) o).setLazyLoaded(true);
+            } else {
+
+                o = result.get(subjectURI);
+
+            }
+
+            List<Method> methodList = methodMap.get(statement.getPredicate().toString());
+
+            Method setterMethod = null;
+            Method getterMethod = null;
+
+            // defining getter and setter methods
+            for (Method m : methodList) {
+                //ignores Java supress warning check
+                m.setAccessible(true);
+
+                if (m.getName().startsWith(PREF_SETTER)) {
+                    setterMethod = m;
+                } else {
+                    getterMethod = m;
+                }
+            }
+
+            //gets the name of the method parameter class
+            String parameterClassName = setterMethod.getParameterTypes()[0].getName();
+
+            //gets the Value from the object of this property
+            Value objValue = statement.getObject();
+
+            //gets the assiciated URI
+            String valueURI = objValue.stringValue();
+
+            //if the property is functional, it enters in the first if
+            // else it has multi values
+            if (!parameterClassName.equals(SET_CLASS)) {
+
+                //it the valueURI is not empty
+                if (!valueURI.isEmpty()) {
+
+                    //if it is a datatype
+                    if (this.datatypeManager.isDatatype(objValue)) {
+                        //mapps to the an specific java native Class                                 
+                        setterMethod.invoke(o, this.datatypeManager.
+                                convertLiteralToDataype((Literal) objValue, parameterClassName));
+                        //else it is an istance
+                    } else {
+                        //gets the class name from the triple store
+                        parameterClassName = this.getClassFromBase(valueURI, contexts);
+
+                        //gets a new instance with its properties not loaded                                
+                        setterMethod.invoke(o, this.
+                                getNotLoadedObject(valueURI, parameterClassName));
+                    }
+                }
+            } else {
+                Set<Object> set = (Set<Object>) getterMethod.invoke(o);
+                if (set == null) {
+                    set = new HashSet<>();
+                }
+                //gets the first value for type searching
+                Value v = statement.getObject();
+                //if it is a datatype
+                if (this.datatypeManager.isDatatype(v)) {
+
+                    //specific java native Class
+                    set.add(this.datatypeManager.convertLiteralToDataype((Literal) v));
+
+                    //else it is an istance
+                } else {
+                    //gets the class name from the triple store
+                    parameterClassName = this.getClassFromBase(v.stringValue(), contexts);
+
+                    //gets a new instance with its properties not loaded
+                    set.add(this.getNotLoadedObject(v.stringValue(), parameterClassName));
+                }
+
+                //invokes the method with the converted parameter
+                setterMethod.invoke(o, set);
+
+                //calls the setInnerModifiedFields to erase the modified fields
+                //of the instance (update mechanics)
+                ((JOINTResource) o).setInnerModifiedFields(new ArrayList<String>());
+
+            }
+            result.put(subjectURI, o);
+        }
         return new ArrayList<>(result.values());
     }
 }
