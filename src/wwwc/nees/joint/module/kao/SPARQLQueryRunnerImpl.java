@@ -334,7 +334,7 @@ public class SPARQLQueryRunnerImpl implements QueryRunner {
                                 instancesURI.add(uri);
                             }
                             result.close();
-                            return this.retrieveOp.convertCollectionOriginalForImpl2(instancesURI, Class.forName(className), contexts);
+                            return this.retrieveOp.convertCollectionOriginalForImpl(instancesURI, Class.forName(className), contexts);
                         }
                     }
                 }
