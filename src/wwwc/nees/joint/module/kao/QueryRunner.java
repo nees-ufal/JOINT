@@ -36,7 +36,9 @@ public interface QueryRunner {
 
     public List<Object> executeQueryAsList2(String query, URI... contexts);
 
-    public OutputStream executeQueryAsJSON(String query);
+    public OutputStream executeTupleQueryAsJSON(String query);
+
+    public String executeGraphQueryAsJSON(String query);
 
     /**
      * Performs queries in the repository, returning a java.util.Iterator with

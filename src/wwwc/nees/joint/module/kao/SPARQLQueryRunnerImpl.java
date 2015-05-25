@@ -429,8 +429,8 @@ public class SPARQLQueryRunnerImpl implements QueryRunner {
     }
 
     @Override
-    public OutputStream executeQueryAsJSON(String query) {
-        // Creates a java.util.List
+    public OutputStream executeTupleQueryAsJSON(String query) {
+
         ByteArrayOutputStream resultsJSON = new ByteArrayOutputStream();
 
         SPARQLResultsJSONWriter jsonWriter = new SPARQLResultsJSONWriter(resultsJSON);
@@ -459,6 +459,37 @@ public class SPARQLQueryRunnerImpl implements QueryRunner {
             Logger.getLogger(SPARQLQueryRunnerImpl.class.getName()).
                     log(Level.SEVERE, null, eR);
             return resultsJSON;
+        }
+    }
+
+    @Override
+    public String executeGraphQueryAsJSON(String query) {
+
+        RDFJSONImpl jsonWriter = new RDFJSONImpl();
+        try {
+            // Gets a connection from repository            
+            RepositoryConnection conn = this.repository.getConnection();
+            // initiates the transaction
+            conn.setAutoCommit(false);
+            try {
+                // Creates the query based on the parameter
+                GraphQuery graphQuery = conn.prepareGraphQuery(QueryLanguage.SPARQL, query);
+                // Performs the query
+
+                graphQuery.evaluate(jsonWriter);
+            } catch (RepositoryException | MalformedQueryException | QueryEvaluationException e) {
+                conn.rollback();
+                Logger.getLogger(SPARQLQueryRunnerImpl.class.getName()).
+                        log(Level.SEVERE, null, e);
+
+            } finally {
+                conn.close();
+                return jsonWriter.getJSONAsString();
+            }
+        } catch (RepositoryException eR) {
+            Logger.getLogger(SPARQLQueryRunnerImpl.class.getName()).
+                    log(Level.SEVERE, null, eR);
+            return jsonWriter.getJSONAsString();
         }
     }
 
