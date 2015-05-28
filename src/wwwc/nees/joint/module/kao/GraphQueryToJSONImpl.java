@@ -11,7 +11,7 @@ import org.openrdf.rio.RDFHandlerException;
 /**
  * @author williams
  */
-public class RDFJSONImpl implements RDFHandler {
+public class GraphQueryToJSONImpl implements RDFHandler {
 
     private JSONObject json;
     private JSONObject json_aux;
@@ -38,7 +38,7 @@ public class RDFJSONImpl implements RDFHandler {
             try {
                 json.getJSONObject(subject).accumulate(predicate, object);
             } catch (JSONException ex) {
-                Logger.getLogger(RDFJSONImpl.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(GraphQueryToJSONImpl.class.getName()).log(Level.SEVERE, null, ex);
             }
         } else {
             try {
@@ -46,7 +46,7 @@ public class RDFJSONImpl implements RDFHandler {
                 json_aux.accumulate(predicate, object);
                 json.put(subject, json_aux);
             } catch (JSONException ex) {
-                Logger.getLogger(RDFJSONImpl.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(GraphQueryToJSONImpl.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     }

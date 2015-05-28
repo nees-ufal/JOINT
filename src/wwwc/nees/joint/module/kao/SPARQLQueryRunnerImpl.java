@@ -2,7 +2,6 @@ package wwwc.nees.joint.module.kao;
 
 import info.aduna.iteration.Iterations;
 import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
 import wwwc.nees.joint.model.OWLUris;
 import wwwc.nees.joint.model.RDFUris;
 import wwwc.nees.joint.model.SWRLUris;
@@ -429,11 +428,11 @@ public class SPARQLQueryRunnerImpl implements QueryRunner {
     }
 
     @Override
-    public OutputStream executeTupleQueryAsJSON(String query) {
+    public String executeTupleQueryAsJSON(String query) {
 
-        ByteArrayOutputStream resultsJSON = new ByteArrayOutputStream();
-
-        SPARQLResultsJSONWriter jsonWriter = new SPARQLResultsJSONWriter(resultsJSON);
+//        ByteArrayOutputStream resultsJSON = new ByteArrayOutputStream();
+//        SPARQLResultsJSONWriter jsonWriter = new SPARQLResultsJSONWriter(resultsJSON);
+        TupleQueryToJSONImpl jsonWriter = new TupleQueryToJSONImpl();
         try {
             // Gets a connection from repository            
             RepositoryConnection conn = this.repository.getConnection();
@@ -453,19 +452,19 @@ public class SPARQLQueryRunnerImpl implements QueryRunner {
 
             } finally {
                 conn.close();
-                return resultsJSON;
+                return jsonWriter.getJSONAsString();
             }
         } catch (RepositoryException eR) {
             Logger.getLogger(SPARQLQueryRunnerImpl.class.getName()).
                     log(Level.SEVERE, null, eR);
-            return resultsJSON;
+            return jsonWriter.getJSONAsString();
         }
     }
 
     @Override
     public String executeGraphQueryAsJSON(String query) {
 
-        RDFJSONImpl jsonWriter = new RDFJSONImpl();
+        GraphQueryToJSONImpl jsonWriter = new GraphQueryToJSONImpl();
         try {
             // Gets a connection from repository            
             RepositoryConnection conn = this.repository.getConnection();
