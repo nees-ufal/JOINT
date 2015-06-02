@@ -2,6 +2,7 @@ package wwwc.nees.joint.module.kao;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -140,8 +141,13 @@ public class CreateOperations {
             URI obj = f.createURI(classIri);
 
             //adds the designation
+            System.out.println(connection);
+            System.out.println(subj);
+            System.out.println(obj);
+            System.out.println(Arrays.toString(contexts));
+            
             connection.add(subj, RDF.TYPE, obj, contexts);
-
+            
             Method met = classImpl.getMethod("setURI", String.class);
             met.invoke(ob, ontologyURI + instancePrefix + id);
 

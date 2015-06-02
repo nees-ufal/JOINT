@@ -1,6 +1,7 @@
 package wwwc.nees.joint.module.kao;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
@@ -141,6 +142,7 @@ public abstract class AbstractKAO {
      * @return T the new instance.
      */
     public <T> T createWithUniqueID(String ontologyURI, String instancePrefix, java.net.URI... contexts) {
+        
         setContexts(contexts);
         CreateOperations createOpe = new CreateOperations();
 
@@ -465,13 +467,12 @@ public abstract class AbstractKAO {
     }
 
     public void setContexts(java.net.URI[] contexts) {
-        if (contexts == null) {
-            this.contexts = new URI[]{};
-        } else {
+        this.contexts = new URI[]{};
+        if (contexts != null) {
             List<URI> uris = new ArrayList<>();
             for (java.net.URI uri : contexts) {
                 uris.add(new URIImpl(uri.toString()));
-            }
+            }            
             this.contexts = uris.toArray(this.contexts);
         }
     }
