@@ -3,6 +3,7 @@ package wwwc.nees.joint.module.kao;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.openrdf.query.BindingSet;
@@ -15,7 +16,7 @@ import org.openrdf.query.TupleQueryResultHandlerException;
  */
 public class TupleQueryToJSONImpl implements TupleQueryResultHandler {
 
-    private JSONObject json = new JSONObject();
+    private final JSONArray json = new JSONArray();
     private JSONObject json_aux;
     private List<String> list;
 
@@ -50,11 +51,6 @@ public class TupleQueryToJSONImpl implements TupleQueryResultHandler {
                 Logger.getLogger(TupleQueryToJSONImpl.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-        try {
-            json.accumulate("results", json_aux);
-        } catch (JSONException ex) {
-            Logger.getLogger(TupleQueryToJSONImpl.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
+        json.put(json_aux);
     }
 }

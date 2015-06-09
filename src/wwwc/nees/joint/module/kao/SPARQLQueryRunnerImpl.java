@@ -1,7 +1,6 @@
 package wwwc.nees.joint.module.kao;
 
 import info.aduna.iteration.Iterations;
-import java.io.ByteArrayOutputStream;
 import wwwc.nees.joint.model.OWLUris;
 import wwwc.nees.joint.model.RDFUris;
 import wwwc.nees.joint.model.SWRLUris;
@@ -31,7 +30,6 @@ import org.openrdf.query.QueryLanguage;
 import org.openrdf.query.TupleQuery;
 import org.openrdf.query.TupleQueryResult;
 import org.openrdf.query.Update;
-import org.openrdf.query.resultio.sparqljson.SPARQLResultsJSONWriter;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
@@ -575,7 +573,6 @@ public class SPARQLQueryRunnerImpl implements QueryRunner {
             try {
                 // Creates the update query based on the parameter
                 Update update = conn.prepareUpdate(QueryLanguage.SPARQL, query);
-
                 // Performs the query
                 update.execute();
 
