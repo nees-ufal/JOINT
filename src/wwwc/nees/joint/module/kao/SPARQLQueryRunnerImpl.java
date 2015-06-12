@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -427,7 +428,6 @@ public class SPARQLQueryRunnerImpl implements QueryRunner {
 
     @Override
     public String executeTupleQueryAsJSON(String query) {
-
 //        ByteArrayOutputStream resultsJSON = new ByteArrayOutputStream();
 //        SPARQLResultsJSONWriter jsonWriter = new SPARQLResultsJSONWriter(resultsJSON);
         TupleQueryToJSONImpl jsonWriter = new TupleQueryToJSONImpl();
@@ -438,10 +438,10 @@ public class SPARQLQueryRunnerImpl implements QueryRunner {
             conn.setAutoCommit(false);
             try {
                 // Creates the query based on the parameter
-                TupleQuery graphQuery = conn.prepareTupleQuery(QueryLanguage.SPARQL, query);
+                TupleQuery tupleQuery = conn.prepareTupleQuery(QueryLanguage.SPARQL, query);
 
                 // Performs the query
-                graphQuery.evaluate(jsonWriter);
+                tupleQuery.evaluate(jsonWriter);
 
             } catch (RepositoryException | MalformedQueryException | QueryEvaluationException e) {
                 conn.rollback();
@@ -457,6 +457,36 @@ public class SPARQLQueryRunnerImpl implements QueryRunner {
                     log(Level.SEVERE, null, eR);
             return jsonWriter.getJSONAsString();
         }
+//        try {
+//            RepositoryConnection con = this.repository.getConnection();
+//
+//            try {
+//                TupleQuery tupleQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, query);
+//                TupleQueryResult qres = tupleQuery.evaluate();
+//                List<Map<String, Object>> reslist = new ArrayList<>();
+//
+//                while (qres.hasNext()) {
+//                    BindingSet b = qres.next();
+//                    Set<String> names = b.getBindingNames();
+//                    String key = b.getValue((String) names.toArray()[0]).stringValue();
+//                    Map<String, Object> hm = new HashMap<>();
+//
+//                    for (String n : names) {
+//                        Value value = b.getValue(n);
+//                        hm.put("\"" + n + "\"", value);
+//                    }
+//                    reslist.add(hm);
+//                }
+//
+//                return reslist.toString();
+//            } finally {
+//                con.close();
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//        return null;
+
     }
 
     @Override
@@ -476,15 +506,19 @@ public class SPARQLQueryRunnerImpl implements QueryRunner {
                 graphQuery.evaluate(jsonWriter);
             } catch (RepositoryException | MalformedQueryException | QueryEvaluationException e) {
                 conn.rollback();
-                Logger.getLogger(SPARQLQueryRunnerImpl.class.getName()).
+                Logger
+                        .getLogger(SPARQLQueryRunnerImpl.class
+                                .getName()).
                         log(Level.SEVERE, null, e);
 
             } finally {
                 conn.close();
                 return jsonWriter.getJSONAsString();
+
             }
         } catch (RepositoryException eR) {
-            Logger.getLogger(SPARQLQueryRunnerImpl.class.getName()).
+            Logger.getLogger(SPARQLQueryRunnerImpl.class
+                    .getName()).
                     log(Level.SEVERE, null, eR);
             return jsonWriter.getJSONAsString();
         }
@@ -506,8 +540,10 @@ public class SPARQLQueryRunnerImpl implements QueryRunner {
         try {
             // Changes the result to a java.util.List
             resultList = (List<Object>) this.executeQueryAsList(query, contexts);
+
         } catch (Exception e) {
-            Logger.getLogger(SPARQLQueryRunnerImpl.class.getName()).
+            Logger.getLogger(SPARQLQueryRunnerImpl.class
+                    .getName()).
                     log(Level.SEVERE, null, e);
         }
 
@@ -542,13 +578,17 @@ public class SPARQLQueryRunnerImpl implements QueryRunner {
                 conn.commit();
             } catch (Exception e) {
                 conn.rollback();
-                Logger.getLogger(SPARQLQueryRunnerImpl.class.getName()).
+                Logger
+                        .getLogger(SPARQLQueryRunnerImpl.class
+                                .getName()).
                         log(Level.SEVERE, null, e);
             } finally {
                 conn.close();
+
             }
         } catch (RepositoryException eR) {
-            Logger.getLogger(SPARQLQueryRunnerImpl.class.getName()).
+            Logger.getLogger(SPARQLQueryRunnerImpl.class
+                    .getName()).
                     log(Level.SEVERE, null, eR);
         }
 
@@ -580,13 +620,17 @@ public class SPARQLQueryRunnerImpl implements QueryRunner {
                 result = true;
             } catch (Exception e) {
                 conn.rollback();
-                Logger.getLogger(SPARQLQueryRunnerImpl.class.getName()).
+                Logger
+                        .getLogger(SPARQLQueryRunnerImpl.class
+                                .getName()).
                         log(Level.SEVERE, null, e);
             } finally {
                 conn.close();
+
             }
         } catch (RepositoryException eR) {
-            Logger.getLogger(SPARQLQueryRunnerImpl.class.getName()).
+            Logger.getLogger(SPARQLQueryRunnerImpl.class
+                    .getName()).
                     log(Level.SEVERE, null, eR);
         }
 

@@ -20,7 +20,7 @@ public class TupleQueryToJSONImpl implements TupleQueryResultHandler {
     private JSONObject json_aux;
     private List<String> list;
 
-    public String getJSONAsString() {
+    public String getJSONAsString() {        
         return json.toString();
     }
 

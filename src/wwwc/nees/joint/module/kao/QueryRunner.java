@@ -1,9 +1,11 @@
 package wwwc.nees.joint.module.kao;
 
 import java.io.OutputStream;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import org.openrdf.model.URI;
+import org.openrdf.model.Value;
 
 /**
  * Interface for query operations in the repository

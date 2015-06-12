@@ -1,9 +1,12 @@
 package wwwc.nees.joint.module.kao;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
+import org.openrdf.model.Resource;
 import org.openrdf.model.Statement;
 import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.RDFHandlerException;
@@ -15,10 +18,12 @@ public class GraphQueryToJSONImpl implements RDFHandler {
 
     private JSONObject json;
     private JSONObject json_aux;
+    private Map<Resource, Map<String, Map<String, Object>>> map;
 
     @Override
     public void startRDF() throws RDFHandlerException {
         json = new JSONObject();
+        map = new HashMap<>();
     }
 
     @Override
@@ -31,6 +36,15 @@ public class GraphQueryToJSONImpl implements RDFHandler {
 
     @Override
     public void handleStatement(Statement stt) throws RDFHandlerException {
+//        Map<String, Map<String, Object>> pred_ob;
+//        if (map.containsKey(stt.getSubject())) {
+//            pred_ob = map.get(stt.getSubject());
+//        } else {
+//            pred_ob = new HashMap<>();
+//        }
+//        
+//        if(stt.getObject().stringValue().startsWith("http")){}
+
         String subject = stt.getSubject().stringValue();
         String predicate = stt.getPredicate().getLocalName();
         String object = stt.getObject().stringValue();

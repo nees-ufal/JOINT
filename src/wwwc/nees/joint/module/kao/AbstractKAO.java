@@ -1,7 +1,6 @@
 package wwwc.nees.joint.module.kao;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
@@ -399,11 +398,11 @@ public abstract class AbstractKAO {
     }
 
     public String executeSPARQLtupleQueryAsJSONString(String query) {
-        return this.queryRunner.executeTupleQueryAsJSON(query).toString();
+        return this.queryRunner.executeTupleQueryAsJSON(query).replaceAll("=", ":");
     }
 
     public String executeSPARQLgraphQueryAsJSONString(String query) {
-        return this.queryRunner.executeGraphQueryAsJSON(query).toString();
+        return this.queryRunner.executeGraphQueryAsJSON(query);
     }
 
     /**
