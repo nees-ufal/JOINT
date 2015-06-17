@@ -26,7 +26,7 @@ public class DatatypeManager {
     private final String INTEGER_NS = "http://www.w3.org/2001/XMLSchema#int";
     private final String FLOAT_CLASS = "java.lang.Float";
     private final String FLOAT_NS = "http://www.w3.org/2001/XMLSchema#float";
-    private final String DECIMAL_CLASS = "java.lang.Float";
+    private final String DECIMAL_CLASS = "java.math.BigDecimal";
     private final String DECIMAL_NS = "http://www.w3.org/2001/XMLSchema#decimal";
     private final String DOUBLE_CLASS = "java.lang.Double";
     private final String DOUBLE_NS = "http://www.w3.org/2001/XMLSchema#double";
@@ -66,7 +66,7 @@ public class DatatypeManager {
             namespacesClass.put(DATETIME_NS, Class.forName(DATETIME_CLASS));
             namespacesClass.put(STRING_NS, Class.forName(STRING_CLASS));
             // estava sobrescrevendo a chave FLOAT_NS
-            // namespacesClass.put(DECIMAL_NS, Class.forName(DECIMAL_CLASS));
+            namespacesClass.put(DECIMAL_NS, Class.forName(DECIMAL_CLASS));
             namespacesClass.put(DOUBLE_NS, Class.forName(DOUBLE_CLASS));
         } catch (ClassNotFoundException ex) {
             Logger.getLogger(DatatypeManager.class.getName()).log(Level.SEVERE, null, ex);
