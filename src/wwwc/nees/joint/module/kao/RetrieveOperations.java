@@ -52,18 +52,17 @@ public class RetrieveOperations {
      * Retrieves the desired instance in the repository.
      *
      * @param <T>
-     * @param ontologyURI a <code>String</code> with the ontology prefix
-     * @param instanceName a <code>String</code> with the instance name.
+     * @param instanceURI a <code>String</code> with the instance URI
      * @param clazz a <code>Class</code> with the instance type
      * @param connection a sesame <code>RepositoryConnection</code>
      * @return T the desired instance.
      * @throws java.lang.Exception any exception
      */
-    public <T> T retrieveInstance(String ontologyURI, String instanceName, Class<T> clazz,
+    public <T> T retrieveInstance(String instanceURI, Class<T> clazz,
             RepositoryConnection connection, URI... contexts) throws Exception {
         this.connection = connection;
         this.f = this.connection.getValueFactory();
-        return (T) this.convertOriginalForImpl(ontologyURI + instanceName, clazz, contexts);
+        return (T) this.convertOriginalForImpl(instanceURI, clazz, contexts);
     }
 
     /**
@@ -408,7 +407,7 @@ public class RetrieveOperations {
                         if (!valueURI.isEmpty()) {
                             //if it is a datatype
                             if (this.datatypeManager.isDatatype(objValue)) {
-                                //mapps to the an specific java native Class                                 
+                                //mapps to the an specific java native Class  
                                 method.invoke(obj, this.datatypeManager.
                                         convertLiteralToDataype((Literal) objValue, parameterClassName));
 //                                method.invoke(obj, this.datatypeManager.
@@ -683,7 +682,7 @@ public class RetrieveOperations {
 
                     //if it is a datatype
                     if (this.datatypeManager.isDatatype(objValue)) {
-                        //mapps to the an specific java native Class                                 
+                        //mapps to the an specific java native Class  
                         setterMethod.invoke(o, this.datatypeManager.
                                 convertLiteralToDataype((Literal) objValue, parameterClassName));
                         //else it is an istance

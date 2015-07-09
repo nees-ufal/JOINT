@@ -141,7 +141,7 @@ public abstract class AbstractKAO {
      * @return T the new instance.
      */
     public <T> T createWithUniqueID(String ontologyURI, String instancePrefix, java.net.URI... contexts) {
-        
+
         setContexts(contexts);
         CreateOperations createOpe = new CreateOperations();
 
@@ -260,6 +260,17 @@ public abstract class AbstractKAO {
      * @return T the desired instance.
      */
     public <T> T retrieveInstance(String ontologyURI, String instanceName, java.net.URI... contexts) {
+        return retrieveInstance(ontologyURI + instanceName, contexts);
+    }
+
+    /**
+     * Retrieves the desired instance in the repository.
+     *
+     * @param instanceURI a <code>String</code> with the instance name.
+     * @param contexts the graphs in which the instance is removed.
+     * @return T the desired instance.
+     */
+    public <T> T retrieveInstance(String instanceURI, java.net.URI... contexts) {
         Object ob = null;
         try {
             setContexts(contexts);
@@ -269,7 +280,7 @@ public abstract class AbstractKAO {
                 //gets connection
                 con.setAutoCommit(false);
 
-                ob = retrieveOpe.retrieveInstance(ontologyURI, instanceName, classe, con, this.getContexts());
+                ob = retrieveOpe.retrieveInstance(instanceURI, classe, con, this.getContexts());
 
                 // Saves the object in the repository
                 con.commit();
@@ -471,7 +482,7 @@ public abstract class AbstractKAO {
             List<URI> uris = new ArrayList<>();
             for (java.net.URI uri : contexts) {
                 uris.add(new URIImpl(uri.toString()));
-            }            
+            }
             this.contexts = uris.toArray(this.contexts);
         }
     }
