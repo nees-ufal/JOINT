@@ -61,8 +61,11 @@ public class GraphQueryToJSONImpl implements RDFHandler {
         String object = stt.getObject().stringValue();
         //Validate the URI and it add to list of triples which possible represent an object
         try {
+
             new URL(object);
-            triplesWithObjects.add(new String[]{subject, predicate, object});
+            if (!subject.equals(object)) {
+                triplesWithObjects.add(new String[]{subject, predicate, object});
+            }
         } catch (MalformedURLException ex) {
         }
 
