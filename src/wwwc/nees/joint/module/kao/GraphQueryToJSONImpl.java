@@ -1,12 +1,13 @@
 package wwwc.nees.joint.module.kao;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
-import org.openrdf.model.Resource;
 import org.openrdf.model.Statement;
 import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.RDFHandlerException;
@@ -16,18 +17,37 @@ import org.openrdf.rio.RDFHandlerException;
  */
 public class GraphQueryToJSONImpl implements RDFHandler {
 
-    private JSONObject json;
+    private JSONObject results;
     private JSONObject json_aux;
-    private Map<Resource, Map<String, Map<String, Object>>> map;
+    private JSONObject results_removed;
+    private List<String[]> triplesWithObjects;
 
     @Override
     public void startRDF() throws RDFHandlerException {
-        json = new JSONObject();
-        map = new HashMap<>();
+        results = new JSONObject();
+        results_removed = new JSONObject();
+        triplesWithObjects = new ArrayList<>();
     }
 
     @Override
     public void endRDF() throws RDFHandlerException {
+
+        for (String[] triples : triplesWithObjects) {
+            JSONObject object;
+            try {
+                if (results.has(triples[2])) {
+                    object = (JSONObject) results.remove(triples[2]);
+                    results_removed.put(triples[2], object);
+                } else if (results_removed.has(triples[2])) {
+                    object = (JSONObject) results_removed.getJSONObject(triples[2]);
+                } else {
+                    continue;
+                }
+                results.getJSONObject(triples[0]).put(triples[1], object);
+            } catch (JSONException ex) {
+                Logger.getLogger(GraphQueryToJSONImpl.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
     }
 
     @Override
@@ -36,21 +56,19 @@ public class GraphQueryToJSONImpl implements RDFHandler {
 
     @Override
     public void handleStatement(Statement stt) throws RDFHandlerException {
-//        Map<String, Map<String, Object>> pred_ob;
-//        if (map.containsKey(stt.getSubject())) {
-//            pred_ob = map.get(stt.getSubject());
-//        } else {
-//            pred_ob = new HashMap<>();
-//        }
-//        
-//        if(stt.getObject().stringValue().startsWith("http")){}
-
         String subject = stt.getSubject().stringValue();
         String predicate = stt.getPredicate().getLocalName();
         String object = stt.getObject().stringValue();
-        if (json.has(subject)) {
+        //Validate the URI and it add to list of triples which possible represent an object
+        try {
+            new URL(object);
+            triplesWithObjects.add(new String[]{subject, predicate, object});
+        } catch (MalformedURLException ex) {
+        }
+
+        if (results.has(subject)) {
             try {
-                json.getJSONObject(subject).accumulate(predicate, object);
+                results.getJSONObject(subject).accumulate(predicate, object);
             } catch (JSONException ex) {
                 Logger.getLogger(GraphQueryToJSONImpl.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -58,11 +76,12 @@ public class GraphQueryToJSONImpl implements RDFHandler {
             try {
                 json_aux = new JSONObject();
                 json_aux.accumulate(predicate, object);
-                json.put(subject, json_aux);
+                results.put(subject, json_aux);
             } catch (JSONException ex) {
                 Logger.getLogger(GraphQueryToJSONImpl.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
+
     }
 
     @Override
@@ -70,6 +89,6 @@ public class GraphQueryToJSONImpl implements RDFHandler {
     }
 
     public String getJSONAsString() {
-        return json.toString();
+        return results.toString();
     }
 }
