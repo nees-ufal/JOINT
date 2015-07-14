@@ -243,10 +243,9 @@ public class AbstractKAOTest {
         String query = "INSERT { GRAPH ?g1 {?s foaf:gender \"Masculino\"}} \n"
                 + "WHERE { GRAPH ?g {values ?s {<" + expected.toString() + ">} ?s a foaf:Person; foaf:age ?age.}\n"
                 + "BIND(?g as ?g1)}";
-        boolean result = kao.executeSPARQLUpdateQuery(query);
+        kao.executeSPARQLUpdateQuery(query);
         Person res_person = kao.retrieveInstance(ontologyURI, instanceName, graphs);
         String res_gender = (String) res_person.getFoafGender();
-        assertTrue(result);
         assertNotSame(exp_gender, res_gender);
     }
 

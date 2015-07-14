@@ -22,13 +22,15 @@ public abstract class AbstractKAO {
     // VARIABLES
     // -------------------------------------------------------------------------
     // Variable to connect with the repository
-    private Repository repository;
+    private final Repository repository;
     // Variable to do operations in the repository
-    private RepositoryConnection con;
+    private RepositoryConnection connection;
     // Variable with the desired class to be implemented
     private Class<?> classe;
     // Interface to perform queries in the repository
-    private QueryRunner queryRunner;
+    private final QueryRunner queryRunner;
+    // Variable to perform retrieve operations
+    private final RetrieveOperations retrieveOperations;
     // URI[] of graph to save triples
     private URI[] contexts;
 
@@ -39,8 +41,6 @@ public abstract class AbstractKAO {
      * <code>ObjectConnection</code>, to do persistence operations.
      *
      * @param classe the class to be implemented.
-     * @param ontologyURI the ontology URI (not the namespace), where
-     * persistence operations will be done.
      *
      */
     public <T> AbstractKAO(Class<T> classe) {
@@ -51,7 +51,8 @@ public abstract class AbstractKAO {
         this.repository = RepositoryFactory.getRepository();
 
         // Creates a QueryRunner with SPARQL implementation
-        this.queryRunner = new SPARQLQueryRunnerImpl(this.repository);
+        this.queryRunner = new SPARQLQueryRunnerImpl();
+        this.retrieveOperations = new RetrieveOperations();
         this.contexts = new URI[]{};
     }
 
@@ -62,6 +63,8 @@ public abstract class AbstractKAO {
      *
      * @param instanceName a <code>String</code> with the instance name.
      * @param ontologyURI a <code>String</code> with the instance name.
+     * @param contexts <code>URI</code> represent the graphs in which the query
+     * will be performed.
      * @return T the new instance.
      */
     public <T> T create(String ontologyURI, String instanceName, java.net.URI... contexts) {
@@ -70,22 +73,21 @@ public abstract class AbstractKAO {
 
         Object ob = null;
         try {
-            con = this.repository.getConnection();
+            connection = this.repository.getConnection();
             try {
-                con.setAutoCommit(false);
+                connection.setAutoCommit(false);
 
-                ob = createOpe.create(ontologyURI, instanceName, this.classe, con, this.getContexts());
-                con.commit();
+                ob = createOpe.create(ontologyURI, instanceName, this.classe, connection, this.getContexts());
+                connection.commit();
 
             } catch (Exception e) {
                 // If throws any exception rollback
-                con.rollback();
+                connection.rollback();
                 Logger
                         .getLogger(AbstractKAO.class
                                 .getName()).log(Level.SEVERE, null, e);
             } finally {
-                con.close();
-
+                connection.close();
             }
         } catch (RepositoryException eR) {
             // If throws repository Exception the the connection is not inialized
@@ -99,6 +101,8 @@ public abstract class AbstractKAO {
      * Creates a new instance in the repository with the specified uri.
      *
      * @param instanceURI a <code>String</code> with the instance uri.
+     * @param contexts <code>URI</code> represent the graphs in which the query
+     * will be performed.
      * @return T the new instance.
      */
     public <T> T create(String instanceURI, java.net.URI... contexts) {
@@ -107,21 +111,21 @@ public abstract class AbstractKAO {
 
         Object ob = null;
         try {
-            con = this.repository.getConnection();
+            connection = this.repository.getConnection();
             try {
-                con.setAutoCommit(false);
+                connection.setAutoCommit(false);
 
-                ob = createOpe.create(instanceURI, this.classe, con, this.getContexts());
-                con.commit();
+                ob = createOpe.create(instanceURI, this.classe, connection, this.getContexts());
+                connection.commit();
 
             } catch (Exception e) {
                 // If throws any exception rollback
-                con.rollback();
+                connection.rollback();
                 Logger
                         .getLogger(AbstractKAO.class
                                 .getName()).log(Level.SEVERE, null, e);
             } finally {
-                con.close();
+                connection.close();
 
             }
         } catch (RepositoryException eR) {
@@ -138,6 +142,8 @@ public abstract class AbstractKAO {
      *
      * @param instancePrefix a <code>String</code> with the prefix name.
      * @param ontologyURI a <code>String</code> with the instance name.
+     * @param contexts <code>URI</code> represent the graphs in which the query
+     * will be performed.
      * @return T the new instance.
      */
     public <T> T createWithUniqueID(String ontologyURI, String instancePrefix, java.net.URI... contexts) {
@@ -147,20 +153,20 @@ public abstract class AbstractKAO {
 
         Object ob = null;
         try {
-            con = this.repository.getConnection();
+            connection = this.repository.getConnection();
             try {
-                con.setAutoCommit(false);
-                ob = createOpe.createWithUniqueID(ontologyURI, instancePrefix, this.classe, con, this.getContexts());
-                con.commit();
+                connection.setAutoCommit(false);
+                ob = createOpe.createWithUniqueID(ontologyURI, instancePrefix, this.classe, connection, this.getContexts());
+                connection.commit();
 
             } catch (Exception e) {
                 // If throws any exception rollback
-                con.rollback();
+                connection.rollback();
                 Logger
                         .getLogger(AbstractKAO.class
                                 .getName()).log(Level.SEVERE, null, e);
             } finally {
-                con.close();
+                connection.close();
 
             }
         } catch (RepositoryException eR) {
@@ -180,27 +186,27 @@ public abstract class AbstractKAO {
         setContexts(contexts);
 
         try {
-            con = this.repository.getConnection();
+            connection = this.repository.getConnection();
 
             try {
                 //gets connection
-                con.setAutoCommit(false);
+                connection.setAutoCommit(false);
                 RemoveOperations removeOpe = new RemoveOperations();
                 //removes the quads that have the corresponding subject 
 //                removeOpe.remove(ontologyURI, instanceName, con, this.getContexts());
                 String subj = ontologyURI + instanceName;
-                removeOpe.remove_SPARQLUpdate(con, subj, this.getContexts());
+                removeOpe.remove_SPARQLUpdate(connection, subj, this.getContexts());
 
                 // Saves the object in the repository
-                con.commit();
+                connection.commit();
             } catch (Exception e) {
                 // If throws any exception rollback
-                con.rollback();
+                connection.rollback();
                 Logger
                         .getLogger(AbstractKAO.class
                                 .getName()).log(Level.SEVERE, null, e);
             } finally {
-                con.close();
+                connection.close();
 
             }
         } catch (RepositoryException eR) {
@@ -220,28 +226,28 @@ public abstract class AbstractKAO {
         try {
             setContexts(contexts);
 
-            con = this.repository.getConnection();
+            connection = this.repository.getConnection();
 
             RemoveOperations removeOpe = new RemoveOperations();
 
             try {
                 //gets connection
-                con.setAutoCommit(false);
+                connection.setAutoCommit(false);
 
-                removeOpe.remove_SPARQLUpdate(con, instance.toString(), this.getContexts());
+                removeOpe.remove_SPARQLUpdate(connection, instance.toString(), this.getContexts());
 //                removeOpe.remove(instance, con, this.getContexts());
 
                 // Saves the object in the repository
-                con.commit();
+                connection.commit();
 
             } catch (Exception e) {
                 // If throws any exception rollback
-                con.rollback();
+                connection.rollback();
                 Logger
                         .getLogger(AbstractKAO.class
                                 .getName()).log(Level.SEVERE, null, e);
             } finally {
-                con.close();
+                connection.close();
 
             }
         } catch (RepositoryException eR) {
@@ -274,24 +280,23 @@ public abstract class AbstractKAO {
         Object ob = null;
         try {
             setContexts(contexts);
-            con = this.repository.getConnection();
-            RetrieveOperations retrieveOpe = new RetrieveOperations(con);
+            connection = this.repository.getConnection();
             try {
                 //gets connection
-                con.setAutoCommit(false);
+                connection.begin();
 
-                ob = retrieveOpe.retrieveInstance(instanceURI, classe, con, this.getContexts());
+                ob = retrieveOperations.retrieveInstance(instanceURI, classe, connection, this.getContexts());
 
                 // Saves the object in the repository
-                con.commit();
+                connection.commit();
             } catch (Exception e) {
                 // If throws any exception rollback
-                con.rollback();
+                connection.rollback();
                 Logger
                         .getLogger(AbstractKAO.class
                                 .getName()).log(Level.SEVERE, null, e);
             } finally {
-                con.close();
+                connection.close();
 
             }
         } catch (RepositoryException eR) {
@@ -305,6 +310,8 @@ public abstract class AbstractKAO {
     /**
      * Retrieves all the instances of the class, passed in the constructor.
      *
+     * @param contexts <code>URI</code> represent the graphs in which the query
+     * will be performed.
      * @return <code>List<T></code> a List with the instances.
      */
     public <T> List<T> retrieveAllInstances(java.net.URI... contexts) {
@@ -313,24 +320,24 @@ public abstract class AbstractKAO {
         List<T> listInstances = new ArrayList<>();
 
         try {
-            con = this.repository.getConnection();
-            RetrieveOperations retrieveOpe = new RetrieveOperations(con);
+            connection = this.repository.getConnection();
+            RetrieveOperations retrieveOpe = new RetrieveOperations();
             try {
                 //gets connection
-                con.setAutoCommit(false);
+                connection.setAutoCommit(false);
 
-                listInstances = (List<T>) retrieveOpe.retrieveAllInstances(classe, con, this.getContexts());
+                listInstances = (List<T>) retrieveOpe.retrieveAllInstances(classe, connection, this.getContexts());
 
                 // Saves the object in the repository
-                con.commit();
+                connection.commit();
             } catch (Exception e) {
                 // If throws any exception rollback
-                con.rollback();
+                connection.rollback();
                 Logger
                         .getLogger(AbstractKAO.class
                                 .getName()).log(Level.SEVERE, null, e);
             } finally {
-                con.close();
+                connection.close();
 
             }
         } catch (RepositoryException eR) {
@@ -346,6 +353,9 @@ public abstract class AbstractKAO {
      * Saves the uncommitted changes in the repository and close the connection
      * with it.
      *
+     * @param instance is the object which will be updated
+     * @param contexts <code>URI</code> represent the graphs in which the query
+     * will be updated.
      */
     public <T> T update(T instance, java.net.URI... contexts) {
         setContexts(contexts);
@@ -354,21 +364,22 @@ public abstract class AbstractKAO {
 
         try {
             //gets connection
-            con = this.repository.getConnection();
+            connection = this.repository.getConnection();
             try {
-                con.setAutoCommit(false);
-                ob = updateOpe.updateDettachedInstance(instance, classe, con, this.getContexts());
+                connection.begin();
+
+                ob = updateOpe.updateDettachedInstance(instance, classe, connection, this.getContexts());
 
                 // Saves the object in the repository
-                con.commit();
+                connection.commit();
             } catch (Exception e) {
                 // If throws any exception rollback
-                con.rollback();
+                connection.rollback();
                 Logger
                         .getLogger(AbstractKAO.class
                                 .getName()).log(Level.SEVERE, null, e);
             } finally {
-                con.close();
+                connection.close();
 
             }
         } catch (RepositoryException eR) {
@@ -387,7 +398,26 @@ public abstract class AbstractKAO {
      * @return object <code>Object</code> result.
      */
     public Object executeSPARQLquerySingleResult(String query) {
-        return this.queryRunner.executeQueryAsSingleResult(query);
+        Object object = null;
+        try {
+            try {
+                //retrieves a connection with the repository
+                connection = this.repository.getConnection();
+                //starts a transaction
+                connection.begin();
+                //performs the query
+                object = this.queryRunner.executeQueryAsSingleResult(connection, query);
+                connection.commit();
+            } catch (Exception ex) {
+                connection.rollback();
+                Logger.getLogger(AbstractKAO.class.getName()).log(Level.SEVERE, null, ex);
+            } finally {
+                connection.close();
+            }
+        } catch (RepositoryException ex) {
+            Logger.getLogger(AbstractKAO.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return object;
     }
 
     /**
@@ -395,25 +425,104 @@ public abstract class AbstractKAO {
      * results.
      *
      * @param query the <code>String</code> with the query to be performed.
+     * @param contexts <code>URI</code> represent the graphs in which the query
+     * will be performed.
      *
-     * @return <code>List<Object></code> a java.util.List with the results.
+     * @return <code>List</code> a java.util.List with the results.
      */
     public List executeSPARQLqueryResultList(String query, java.net.URI... contexts) {
         setContexts(contexts);
-        return this.queryRunner.executeQueryAsList(query, this.getContexts());
+        List<Object> objects = null;
+        try {
+            try {
+                //retrieves a connection with the repository
+                connection = this.repository.getConnection();
+                //starts a transaction
+                connection.begin();
+                //performs the query
+                objects = this.queryRunner.executeQueryAsList(connection, query, this.getContexts());
+                connection.commit();
+            } catch (Exception ex) {
+                connection.rollback();
+                Logger.getLogger(AbstractKAO.class.getName()).log(Level.SEVERE, null, ex);
+            } finally {
+                connection.close();
+            }
+        } catch (RepositoryException ex) {
+            Logger.getLogger(AbstractKAO.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        return objects;
     }
 
     public List executeSPARQLqueryResultList2(String query, java.net.URI... contexts) {
         setContexts(contexts);
-        return this.queryRunner.executeQueryAsList2(query, this.getContexts());
+        List<Object> objects = null;
+        try {
+            try {
+                //retrieves a connection with the repository
+                connection = this.repository.getConnection();
+                //starts a transaction
+                connection.begin();
+                //performs the query
+                objects = this.queryRunner.executeQueryAsList2(connection, query, this.getContexts());
+                connection.commit();
+            } catch (Exception ex) {
+                connection.rollback();
+                Logger.getLogger(AbstractKAO.class.getName()).log(Level.SEVERE, null, ex);
+            } finally {
+                connection.close();
+            }
+        } catch (RepositoryException ex) {
+            Logger.getLogger(AbstractKAO.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return objects;
     }
 
     public String executeSPARQLtupleQueryAsJSONString(String query) {
-        return this.queryRunner.executeTupleQueryAsJSON(query).replaceAll("=", ":");
+        String results = null;
+        try {
+            try {
+                //retrieves a connection with the repository
+                connection = this.repository.getConnection();
+                //starts a transaction
+                connection.begin();
+                //performs the query
+                results = this.queryRunner.executeTupleQueryAsJSON(connection, query).replaceAll("=", ":");
+                connection.commit();
+            } catch (Exception ex) {
+                connection.rollback();
+                Logger.getLogger(AbstractKAO.class.getName()).log(Level.SEVERE, null, ex);
+            } finally {
+                connection.close();
+            }
+        } catch (RepositoryException ex) {
+            Logger.getLogger(AbstractKAO.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return results;
     }
 
     public String executeSPARQLgraphQueryAsJSONString(String query) {
-        return this.queryRunner.executeGraphQueryAsJSON(query);
+        String results = null;
+        try {
+            try {
+                //retrieves a connection with the repository
+                connection = this.repository.getConnection();
+                //starts a transaction
+                connection.begin();
+                //performs the query
+                results = this.queryRunner.executeGraphQueryAsJSON(connection, query);
+                connection.commit();
+            } catch (Exception ex) {
+                connection.rollback();
+                Logger.getLogger(AbstractKAO.class.getName()).log(Level.SEVERE, null, ex);
+            } finally {
+                connection.close();
+            }
+        } catch (RepositoryException ex) {
+            Logger.getLogger(AbstractKAO.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return results;
     }
 
     /**
@@ -421,14 +530,14 @@ public abstract class AbstractKAO {
      * the results.
      *
      * @param query the <code>String</code> with the query to be performed.
-     * @param contexts <code>URI</code> represents the graphs that will be
-     * queried
+     * @param contexts <code>URI</code> represent the graphs in which the query
+     * will be performed.
      *
-     * @return <code>Iterator<Object></code> a java.util.List with the results.
+     * @return <code>Iterator</code> a java.util.List with the results.
      */
     public Iterator executeQueryAsIterator(String query, java.net.URI... contexts) {
-        setContexts(contexts);
-        return this.queryRunner.executeQueryAsIterator(query, this.getContexts());
+        //Converter to Iterator and return
+        return executeSPARQLqueryResultList(query, contexts).iterator();
     }
 
     /**
@@ -440,7 +549,26 @@ public abstract class AbstractKAO {
      * @return <code>boolean<Object></code> true or false.
      */
     public boolean executeBooleanQuery(String query) {
-        return this.queryRunner.executeBooleanQuery(query);
+        boolean result = false;
+        try {
+            try {
+                //retrieves a connection with the repository
+                connection = this.repository.getConnection();
+                //starts a transaction
+                connection.begin();
+                //performs the query
+                result = this.queryRunner.executeBooleanQuery(connection, query);
+                connection.commit();
+            } catch (Exception ex) {
+                connection.rollback();
+                Logger.getLogger(AbstractKAO.class.getName()).log(Level.SEVERE, null, ex);
+            } finally {
+                connection.close();
+            }
+        } catch (RepositoryException ex) {
+            Logger.getLogger(AbstractKAO.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return result;
     }
 
     /**
@@ -448,10 +576,54 @@ public abstract class AbstractKAO {
      * true if the query was performed with successful or false otherwise.
      *
      * @param query the <code>String</code> with the query to be performed.
-     * @return <code>boolean</code> true or false.
      */
-    public boolean executeSPARQLUpdateQuery(String query) {
-        return this.queryRunner.executeUpdateQuery(query);
+    public void executeSPARQLUpdateQuery(String query) {
+        try {
+            try {
+                //retrieves a connection with the repository
+                connection = this.repository.getConnection();
+                //starts a transaction
+                connection.begin();
+                //performs the query
+                this.queryRunner.executeUpdateQuery(connection, query);
+                connection.commit();
+            } catch (Exception ex) {
+                connection.rollback();
+                Logger.getLogger(AbstractKAO.class.getName()).log(Level.SEVERE, null, ex);
+            } finally {
+                connection.close();
+            }
+        } catch (RepositoryException ex) {
+            Logger.getLogger(AbstractKAO.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    /**
+     * Gets all the contexts from quadstore.
+     *
+     * @return an URI list
+     */
+    public List<java.net.URI> getAllContexts() {
+        List<java.net.URI> allContexts = null;
+        try {
+            try {
+                //retrieves a connection with the repository
+                connection = this.repository.getConnection();
+                //starts a transaction
+                connection.begin();
+                //performs the query
+                allContexts = retrieveOperations.getContexts(connection);
+                connection.commit();
+            } catch (RepositoryException ex) {
+                connection.rollback();
+                Logger.getLogger(AbstractKAO.class.getName()).log(Level.SEVERE, null, ex);
+            } finally {
+                connection.close();
+            }
+        } catch (RepositoryException ex) {
+            Logger.getLogger(AbstractKAO.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return allContexts;
     }
 
     /**

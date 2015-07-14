@@ -12,6 +12,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import wwwc.nees.joint.compiler.annotations.Iri;
 import org.openrdf.model.Literal;
+import org.openrdf.model.Resource;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
 import org.openrdf.model.Value;
@@ -19,6 +20,7 @@ import org.openrdf.model.ValueFactory;
 import org.openrdf.model.vocabulary.RDF;
 import org.openrdf.query.GraphQueryResult;
 import org.openrdf.repository.RepositoryConnection;
+import org.openrdf.repository.RepositoryException;
 import org.openrdf.repository.RepositoryResult;
 import wwwc.nees.joint.model.JOINTResource;
 
@@ -27,10 +29,8 @@ import wwwc.nees.joint.model.JOINTResource;
  */
 public class RetrieveOperations {
 
-    private DatatypeManager datatypeManager;
-    private RepositoryConnection connection;
-    private ValueFactory f;
-    private Map<String, String> packages;
+    private final DatatypeManager datatypeManager;
+    private final Map<String, String> packages;
     private static final String OBJECT_CLASS = "java.lang.Object";
     private static final String SET_CLASS = "java.util.Set";
     private static final String METHOD_SET_INNERFIELDS = "setInnerModifiedFields";
@@ -38,14 +38,10 @@ public class RetrieveOperations {
     private static final String METHOD_SET_URI = "setURI";
     private static final String PREF_SETTER = "set";
     private static final String SUF_IMPL_CLASS = "Impl";
-    private GraphQueryConstruct graphQueryConstruct;
 
-    public RetrieveOperations(RepositoryConnection connection) {
+    public RetrieveOperations() {
         this.packages = ConceptsPackageInfo.getPackagesInfo(this.getClass());
         this.datatypeManager = DatatypeManager.getInstance();
-        this.connection = connection;
-        this.f = this.connection.getValueFactory();
-        this.graphQueryConstruct = new GraphQueryConstruct(connection);
     }
 
     /**
@@ -54,35 +50,35 @@ public class RetrieveOperations {
      * @param <T>
      * @param instanceURI a <code>String</code> with the instance URI
      * @param clazz a <code>Class</code> with the instance type
-     * @param connection a sesame <code>RepositoryConnection</code>
+     * @param connection receives an object of connection with the repository
+     * @param contexts <code>URI</code> represent the graphs in which the query
+     * will be performed.
      * @return T the desired instance.
      * @throws java.lang.Exception any exception
      */
     public <T> T retrieveInstance(String instanceURI, Class<T> clazz,
             RepositoryConnection connection, URI... contexts) throws Exception {
-        this.connection = connection;
-        this.f = this.connection.getValueFactory();
-        return (T) this.convertOriginalForImpl(instanceURI, clazz, contexts);
+        return (T) this.convertOriginalForImpl(connection, instanceURI, clazz, contexts);
     }
 
     /**
      * Retrieves all the instances of the class, passed in the constructor.
      *
-     * @param <T>
      * @param clazz a <code>Class</code> with the instance type
-     * @param connection a sesame <code>RepositoryConnection</code>
+     * @param connection receives an object of connection with the repository
+     * @param contexts <code>URI</code> represent the graphs in which the query
+     * will be performed.
      * @return a <code>List</code> with the instances.
      * @throws java.lang.Exception any exception
      */
     public <T> List<T> retrieveAllInstances(Class<T> clazz,
             RepositoryConnection connection, URI... contexts) throws Exception {
 
-        this.connection = connection;
-        this.f = this.connection.getValueFactory();
+        ValueFactory f = connection.getValueFactory();
 
         // Creates a new java.util.List
         List<T> listInstances = new ArrayList<>();
-        RepositoryResult<Statement> stts = this.connection.getStatements(null, RDF.TYPE, this.f.createURI(((Iri) clazz.getAnnotation(Iri.class)).value()), true, contexts);
+        RepositoryResult<Statement> stts = connection.getStatements(null, RDF.TYPE, f.createURI(((Iri) clazz.getAnnotation(Iri.class)).value()), true, contexts);
         while (stts.hasNext()) {
             List<String> instancesName = new ArrayList<>();
 
@@ -90,17 +86,16 @@ public class RetrieveOperations {
 
             instancesName.add(statement.getSubject().stringValue());
 
-            listInstances.addAll((Collection<? extends T>) (T) this.convertCollectionOriginalForImpl(instancesName, clazz, contexts));
+            listInstances.addAll((Collection<? extends T>) (T) this.convertCollectionOriginalForImpl(connection, instancesName, clazz, contexts));
         }
         stts.close();
         return listInstances;
     }
 
-    public String getClassFromBase(String subj, URI... contexts) throws Exception {
-        ValueFactory f = connection.getValueFactory();
-        URI sub = f.createURI(subj);
+    public String getClassFromBase(RepositoryConnection connection, String subj, URI... contexts) throws RepositoryException {
+        URI sub = connection.getValueFactory().createURI(subj);
 
-        RepositoryResult<Statement> statements = this.connection.getStatements(sub, RDF.TYPE, null, true, contexts);
+        RepositoryResult<Statement> statements = connection.getStatements(sub, RDF.TYPE, null, true, contexts);
         //Preparar a query para recuperar o tipo de instancia
         while (statements.hasNext()) {
             String uriObj = statements.next().getObject().stringValue();
@@ -179,11 +174,11 @@ public class RetrieveOperations {
         return mapProperties;
     }
 
-    public Object convertOriginalForImpl(String instanceName, Class clazz, URI... contexts) throws Exception {
+    public Object convertOriginalForImpl(RepositoryConnection connection, String instanceName, Class clazz, URI... contexts) throws Exception {
 
-        URI suj = f.createURI(instanceName);
+        URI suj = connection.getValueFactory().createURI(instanceName);
         //checks if this instance is in the triple store
-        boolean objectNull = this.connection.hasStatement(suj, RDF.TYPE, null, true, contexts);
+        boolean objectNull = connection.hasStatement(suj, RDF.TYPE, null, true, contexts);
 
         if (!objectNull) {
             return null;
@@ -208,6 +203,7 @@ public class RetrieveOperations {
         Method[] allMethodsClassImpl = classImpl.getMethods();
 
         //retrieves all values of the properties of the instance
+        GraphQueryConstruct graphQueryConstruct = new GraphQueryConstruct(connection);
         List<Statement> statements = graphQueryConstruct.getStatementsAsList(suj.toString(), null, null, contexts);
         //creates a map to hold all values of the properties
         Map<String, List<Value>> mapProperties = this.sortPropertiesAndValues(statements);
@@ -260,7 +256,7 @@ public class RetrieveOperations {
                             //else it is an istance
                         } else {
                             //gets the class name from the triple store
-                            parameterClassName = this.getClassFromBase(valueURI, contexts);
+                            parameterClassName = this.getClassFromBase(connection, valueURI, contexts);
                             //gets a new instance with its properties not loaded
                             method.invoke(obj, this.
                                     getNotLoadedObject(valueURI, parameterClassName));
@@ -283,7 +279,7 @@ public class RetrieveOperations {
                         //else it is an istance
                     } else {
                         //gets the class name from the triple store
-                        parameterClassName = this.getClassFromBase(v.stringValue(), contexts);
+                        parameterClassName = this.getClassFromBase(connection, v.stringValue(), contexts);
                         //crawls the list of values converting to the
                         //specific Class
                         for (Value objValue : listValues) {
@@ -303,7 +299,7 @@ public class RetrieveOperations {
         return obj;
     }
 
-    public List<Object> convertCollectionOriginalForImpl(List<String> instancesName, Class clazz, URI... contexts) throws Exception {
+    public List<Object> convertCollectionOriginalForImpl(RepositoryConnection connection, List<String> instancesName, Class clazz, URI... contexts) throws Exception {
 
         List<Object> returnList = new ArrayList<>();
 
@@ -326,6 +322,7 @@ public class RetrieveOperations {
 
         //constructs a query to get all information about the objects that will
         //be parsed
+        GraphQueryConstruct graphQueryConstruct = new GraphQueryConstruct(connection);
         GraphQueryResult stts = graphQueryConstruct.getStatementsAsGraphQuery(instancesName, null, null, contexts);
         //creates a map with key - uri/object - list of statements
         Map<String, List<Statement>> cInformation = new HashMap<>();
@@ -415,7 +412,7 @@ public class RetrieveOperations {
                                 //else it is an istance
                             } else {
                                 //gets the class name from the triple store
-                                parameterClassName = this.getClassFromBase(valueURI, contexts);
+                                parameterClassName = this.getClassFromBase(connection, valueURI, contexts);
                                 //gets a new instance with its properties not loaded                                
                                 method.invoke(obj, this.
                                         getNotLoadedObject(valueURI, parameterClassName));
@@ -438,7 +435,7 @@ public class RetrieveOperations {
                             //else it is an istance
                         } else {
                             //gets the class name from the triple store
-                            parameterClassName = this.getClassFromBase(v.stringValue(), contexts);
+                            parameterClassName = this.getClassFromBase(connection, v.stringValue(), contexts);
                             //crawls the list of values converting to the
                             //specific Class
                             for (Value objValue : listValues) {
@@ -461,7 +458,7 @@ public class RetrieveOperations {
         return returnList;
     }
 
-    public List<Object> convertCollectionOriginalForImpl2(List<String> instancesName, Class clazz, URI... contexts) throws Exception {
+    public List<Object> convertCollectionOriginalForImpl2(RepositoryConnection connection, List<String> instancesName, Class clazz, URI... contexts) throws Exception {
         HashMap<String, Object> result = new HashMap<>();
         HashMap<String, List<Method>> methodMap = new HashMap<>();
 
@@ -495,6 +492,7 @@ public class RetrieveOperations {
 
         //constructs a query to get all information about the objects that will
         //be parsed
+        GraphQueryConstruct graphQueryConstruct = new GraphQueryConstruct(connection);
         GraphQueryResult stts = graphQueryConstruct.getStatementsAsGraphQuery(instancesName, null, null, contexts);
 
         //iterates the previous graph result
@@ -505,18 +503,15 @@ public class RetrieveOperations {
             }
             String subjectURI = statement.getSubject().stringValue();
 
-            Object o = null;
+            Object o;
             if (!result.containsKey(subjectURI)) {
                 o = classImpl.newInstance();
-
                 //casts the object to the upper class JOINTResource and
                 //calls the methods setURI and setLazyLoaded
                 ((JOINTResource) o).setURI(subjectURI);
                 ((JOINTResource) o).setLazyLoaded(true);
             } else {
-
                 o = result.get(subjectURI);
-
             }
 
             List<Method> methodList = methodMap.get(statement.getPredicate().toString());
@@ -560,7 +555,7 @@ public class RetrieveOperations {
                         //else it is an istance
                     } else {
                         //gets the class name from the triple store
-                        parameterClassName = this.getClassFromBase(valueURI, contexts);
+                        parameterClassName = this.getClassFromBase(connection, valueURI, contexts);
 
                         //gets a new instance with its properties not loaded                                
                         setterMethod.invoke(o, this.
@@ -583,7 +578,7 @@ public class RetrieveOperations {
                     //else it is an istance
                 } else {
                     //gets the class name from the triple store
-                    parameterClassName = this.getClassFromBase(v.stringValue(), contexts);
+                    parameterClassName = this.getClassFromBase(connection, v.stringValue(), contexts);
 
                     //gets a new instance with its properties not loaded
                     set.add(this.getNotLoadedObject(v.stringValue(), parameterClassName));
@@ -603,7 +598,7 @@ public class RetrieveOperations {
         return new ArrayList<>(result.values());
     }
 
-    public List<Object> convertCollectionOriginalForImpl3(List<Statement> graphQuery, Class clazz, URI... contexts) throws Exception {
+    public List<Object> convertCollectionOriginalForImpl3(RepositoryConnection connection, List<Statement> graphQuery, Class clazz, URI... contexts) throws Exception {
         HashMap<String, Object> result = new HashMap<>();
         HashMap<String, List<Method>> methodMap = new HashMap<>();
 
@@ -688,7 +683,7 @@ public class RetrieveOperations {
                         //else it is an istance
                     } else {
                         //gets the class name from the triple store
-                        parameterClassName = this.getClassFromBase(valueURI, contexts);
+                        parameterClassName = this.getClassFromBase(connection, valueURI, contexts);
 
                         //gets a new instance with its properties not loaded                                
                         setterMethod.invoke(o, this.
@@ -711,7 +706,7 @@ public class RetrieveOperations {
                     //else it is an istance
                 } else {
                     //gets the class name from the triple store
-                    parameterClassName = this.getClassFromBase(v.stringValue(), contexts);
+                    parameterClassName = this.getClassFromBase(connection, v.stringValue(), contexts);
 
                     //gets a new instance with its properties not loaded
                     set.add(this.getNotLoadedObject(v.stringValue(), parameterClassName));
@@ -728,5 +723,24 @@ public class RetrieveOperations {
             result.put(subjectURI, o);
         }
         return new ArrayList<>(result.values());
+    }
+
+    /**
+     * Gets all the contexts from quadstore.
+     *
+     * @param connection receives an object of connection with the repository
+     * @return an URI list
+     * @throws org.openrdf.repository.RepositoryException occurs error in the
+     * connection with the database.
+     */
+    public List<java.net.URI> getContexts(RepositoryConnection connection) throws RepositoryException {
+        //creates a variable to store temporarialy the results
+        List<java.net.URI> results = new ArrayList<>();
+        RepositoryResult<Resource> contexts = connection.getContextIDs();
+        while (contexts.hasNext()) {
+            results.add(java.net.URI.create(contexts.next().stringValue()));
+        }
+        contexts.close();
+        return results;
     }
 }
