@@ -33,8 +33,6 @@ public abstract class AbstractKAO {
     private Class<?> classe;
     // Interface to perform queries in the repository
     private final QueryRunner queryRunner;
-    // Variable to perform retrieve operations
-    private final RetrieveOperations retrieveOperations;
     // URI[] of graph to save triples
     private URI[] contexts;
 
@@ -55,7 +53,6 @@ public abstract class AbstractKAO {
         this.repository = RepositoryFactory.getRepository();
         // Creates a QueryRunner with SPARQL implementation
         this.queryRunner = new SPARQLQueryRunnerImpl();
-        this.retrieveOperations = new RetrieveOperations();
         this.contexts = new URI[]{};
     }
 
@@ -168,11 +165,10 @@ public abstract class AbstractKAO {
             try {
                 //gets connection
                 connection.begin();
-                RemoveOperations removeOpe = new RemoveOperations();
                 //removes the quads that have the corresponding subject 
 //                removeOpe.remove(ontologyURI, instanceName, con, this.getContexts());
                 String subj = ontologyURI + instanceName;
-                removeOpe.remove_SPARQLUpdate(connection, subj, this.getContexts());
+                new RemoveOperations().remove_SPARQLUpdate(connection, subj, this.getContexts());
 
                 // Saves the object in the repository
                 connection.commit();
@@ -204,13 +200,11 @@ public abstract class AbstractKAO {
 
             connection = this.repository.getConnection();
 
-            RemoveOperations removeOpe = new RemoveOperations();
-
             try {
                 //gets connection
                 connection.begin();
 
-                removeOpe.remove_SPARQLUpdate(connection, instance.toString(), this.getContexts());
+                new RemoveOperations().remove_SPARQLUpdate(connection, instance.toString(), this.getContexts());
 //                removeOpe.remove(instance, con, this.getContexts());
 
                 // Saves the object in the repository
@@ -261,7 +255,7 @@ public abstract class AbstractKAO {
                 //gets connection
                 connection.begin();
 
-                ob = retrieveOperations.retrieveInstance(connection, instanceURI, classe, this.getContexts());
+                ob = new RetrieveOperations().retrieveInstance(connection, instanceURI, classe, this.getContexts());
 
                 // Saves the object in the repository
                 connection.commit();
@@ -297,12 +291,11 @@ public abstract class AbstractKAO {
 
         try {
             connection = this.repository.getConnection();
-            RetrieveOperations retrieveOpe = new RetrieveOperations();
             try {
                 //gets connection
                 connection.begin();
 
-                listInstances = (List<T>) retrieveOpe.retrieveAllInstances(connection, classe, this.getContexts());
+                listInstances = (List<T>) new RetrieveOperations().retrieveAllInstances(connection, classe, this.getContexts());
 
                 // Saves the object in the repository
                 connection.commit();
@@ -336,7 +329,6 @@ public abstract class AbstractKAO {
     public <T> T update(T instance, java.net.URI... contexts) {
         setContexts(contexts);
         Object ob = null;
-        UpdateOperations updateOpe = new UpdateOperations();
 
         try {
             //gets connection
@@ -344,7 +336,7 @@ public abstract class AbstractKAO {
             try {
                 connection.begin();
 
-                ob = updateOpe.updateDettachedInstance(connection, instance, classe, this.getContexts());
+                ob = new UpdateOperations().updateDettachedInstance(connection, instance, classe, this.getContexts());
 
                 // Saves the object in the repository
                 connection.commit();
@@ -588,7 +580,7 @@ public abstract class AbstractKAO {
                 //starts a transaction
                 connection.begin();
                 //performs the query
-                allContexts = retrieveOperations.getContexts(connection);
+                allContexts = new RetrieveOperations().getContexts(connection);
                 connection.commit();
             } catch (RepositoryException ex) {
                 connection.rollback();

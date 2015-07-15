@@ -133,7 +133,6 @@ public class UpdateOperations {
                 }
             }
         }
-
         connection.add((Iterable) updSts, contexts);
 
         //erases inner modified fields

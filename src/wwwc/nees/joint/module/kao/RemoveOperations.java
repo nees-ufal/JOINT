@@ -99,6 +99,7 @@ public class RemoveOperations {
         query.append("GRAPH ?g {?s ?p ?o.}}");
         //evaluate the graph result
         Update prepareGraphQuery = connection.prepareUpdate(QueryLanguage.SPARQL, query.toString());
+
         prepareGraphQuery.execute();
     }
 
