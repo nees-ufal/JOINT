@@ -54,7 +54,7 @@ public class UpdateOperations {
         return this.f.createLiteral(value);
     }
 
-    public Object updateDettachedInstance(Object instance, Class classe, RepositoryConnection connection, URI... contexts) throws ClassNotFoundException,
+    public Object updateDettachedInstance(RepositoryConnection connection, Object instance, Class classe, URI... contexts) throws ClassNotFoundException,
             InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, RepositoryException, NoSuchMethodException, Exception {
         this.f = connection.getValueFactory();
 
@@ -70,7 +70,6 @@ public class UpdateOperations {
 
         List<String> auxModifiedMethods = new ArrayList(modifiedMethods);
 
-        RemoveOperations removeOpe = new RemoveOperations();
         //for over these modified methods
         for (String methodName : auxModifiedMethods) {
 
@@ -84,7 +83,7 @@ public class UpdateOperations {
             URI pred = f.createURI(iri.value());
 
             //connection.remove(suj, pred, null, contexts);
-            removeOpe.removeStatements(connection, suj.toString(), pred.toString(), null, contexts);
+            RemoveOperations.removeStatements(connection, suj.toString(), pred.toString(), null, contexts);
 
             Object returnOb = method.invoke(instance);
 

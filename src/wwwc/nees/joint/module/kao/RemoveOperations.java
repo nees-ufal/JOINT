@@ -67,9 +67,8 @@ public class RemoveOperations {
      * @param object representing the object corresponding in a quad.
      * @param contexts representing the contexts where statements will be
      * removed
-     * @throws java.lang.Exception
      */
-    public <T> void removeStatements(RepositoryConnection connection, String subject, String property, String object, URI... contexts) throws RepositoryException, MalformedQueryException, UpdateExecutionException {
+    public static <T> void removeStatements(RepositoryConnection connection, String subject, String property, String object, URI... contexts) throws RepositoryException, MalformedQueryException, UpdateExecutionException {
         //Query to retrieve the informations (?s ?p ?o)
         StringBuilder query = new StringBuilder();
         //Build the query to retrieve the requested elements (?s ?p ?o) where
@@ -121,7 +120,7 @@ public class RemoveOperations {
      * @param object is the value of an object corresponding to the triple
      * @return a string in the form of identified type (URI, number or literal)
      */
-    private String identifyObjectType(String object) {
+    private static String identifyObjectType(String object) {
         StringBuilder value = new StringBuilder();
 
         try {

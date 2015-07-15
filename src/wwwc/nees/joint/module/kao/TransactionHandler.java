@@ -14,15 +14,14 @@ public class TransactionHandler {
     // VARIABLES
     // -------------------------------------------------------------------------
     // Variable to connect with the repository
-    private RepositoryConnection connection;
+    private final RepositoryConnection connection;
 
     // CONSTRUCTOR
     // -------------------------------------------------------------------------
     /**
      * Initializes the connection with the repository
      *
-     * @param connection
-     *            the class to be implemented.
+     * @param connection the class to be implemented.
      */
     public TransactionHandler(RepositoryConnection connection) {
         this.connection = connection;
@@ -36,7 +35,7 @@ public class TransactionHandler {
      * @throws RepositoryException
      */
     public void beginTransaction() throws RepositoryException {
-        this.connection.setAutoCommit(false);
+        this.connection.begin();
     }
 
     /**

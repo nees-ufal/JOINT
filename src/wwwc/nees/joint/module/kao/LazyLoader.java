@@ -274,7 +274,7 @@ public class LazyLoader {
             RepositoryConnection con = RepositoryFactory.getRepository().getConnection();
 
             //gets connection
-            con.setAutoCommit(false);
+            con.begin();
 
             LazyLoader lazyLoader = new LazyLoader(con);
             try {

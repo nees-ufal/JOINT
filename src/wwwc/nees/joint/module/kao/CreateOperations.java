@@ -2,7 +2,6 @@ package wwwc.nees.joint.module.kao;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -25,53 +24,15 @@ public class CreateOperations {
     // METHODS
     // -------------------------------------------------------------------------
     /**
-     * Creates a new instance in the repository with the specified name.
-     *
-     * @param instanceName a <code>String</code> with the instance name.
-     * @param ontologyURI a <code>String</code> with the instance name.
-     * @return T the new instance.
-     */
-    public <T> T create(String ontologyURI, String instanceName, Class<T> clazz, RepositoryConnection connection, URI... contexts)
-            throws ClassNotFoundException, RepositoryException, NoSuchMethodException,
-            IllegalAccessException, IllegalArgumentException, InvocationTargetException, InstantiationException, NullPointerException {
-        Object ob = null;
-        Class classImpl;
-        try {
-            classImpl = Class.forName(clazz.getName() + "Impl");
-            setURI = classImpl.getMethod("setURI", String.class);
-            lazyLoaded = classImpl.getMethod("setLazyLoaded", boolean.class);
-            classIri = ((Iri) clazz.getAnnotation(Iri.class)).value();
-
-            //Criar o objeto da class impl
-            ob = classImpl.newInstance();
-
-            //gets connection
-            ValueFactory f = connection.getValueFactory();
-
-            //creates the subject and the object
-            URI subj = f.createURI(ontologyURI + instanceName);
-            URI obj = f.createURI(classIri);
-
-            //adds the designation
-            connection.add(subj, RDF.TYPE, obj, contexts);
-
-            setURI.invoke(ob, ontologyURI + instanceName);
-
-            lazyLoaded.invoke(ob, true);
-        } catch (NoSuchMethodException | SecurityException | ClassNotFoundException ex) {
-            Logger.getLogger(CreateOperations.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-        return (T) ob;
-    }
-    /**
      * Creates a new instance in the repository with the specified uri.
      *
-     * @param instanceURI a <code>String</code> with the instance uri.
-     * @param ontologyURI a <code>String</code> with the instance name.
+     * @param instanceURI a <code>URI</code> with the instance uri.
+     * @param connection receives an object of connection with the repository
+     * @param contexts <code>URI</code> represent the graphs in which the
+     * instance will be inserted.
      * @return T the new instance.
      */
-    public <T> T create(String instanceURI, Class<T> clazz, RepositoryConnection connection, URI... contexts)
+    public <T> T create(RepositoryConnection connection, String instanceURI, Class<T> clazz, URI... contexts)
             throws ClassNotFoundException, RepositoryException, NoSuchMethodException,
             IllegalAccessException, IllegalArgumentException, InvocationTargetException, InstantiationException, NullPointerException {
         Object ob = null;
@@ -82,15 +43,14 @@ public class CreateOperations {
             lazyLoaded = classImpl.getMethod("setLazyLoaded", boolean.class);
             classIri = ((Iri) clazz.getAnnotation(Iri.class)).value();
 
-            //Criar o objeto da class impl
+            //Creates the object to Impl class
             ob = classImpl.newInstance();
 
-            //gets connection
-            ValueFactory f = connection.getValueFactory();
+            ValueFactory vf = connection.getValueFactory();
 
-            //creates the subject and the object
-            URI subj = f.createURI(instanceURI);
-            URI obj = f.createURI(classIri);
+            //creates the object
+            URI subj = vf.createURI(instanceURI);
+            URI obj = vf.createURI(classIri);
 
             //adds the designation
             connection.add(subj, RDF.TYPE, obj, contexts);
@@ -109,13 +69,16 @@ public class CreateOperations {
      * Creates a new instance with a unique ID in the repository with the
      * specified prefix.
      *
+     * @param connection receives an object of connection with the repository
      * @param instancePrefix a <code>String</code> with the prefix name.
      * @param ontologyURI a <code>String</code> with the instance name.
+     * @param contexts <code>URI</code> represent the graphs in which the
+     * instance will be inserted.
      * @return T the new instance.
      */
-    public <T> T createWithUniqueID(String ontologyURI, String instancePrefix, Class<T> clazz, RepositoryConnection connection, URI... contexts)
+    public <T> T createWithUniqueID(RepositoryConnection connection, String ontologyURI, String instancePrefix, Class<T> clazz, URI... contexts)
             throws ClassNotFoundException, RepositoryException, NoSuchMethodException,
-            IllegalAccessException, IllegalArgumentException, InvocationTargetException, InstantiationException,NullPointerException {
+            IllegalAccessException, IllegalArgumentException, InvocationTargetException, InstantiationException, NullPointerException {
         // Creates an object with the URI and the .class
         Object ob = null;
         Class classImpl;
@@ -140,14 +103,8 @@ public class CreateOperations {
             //URI obj = f.createURI(((Iri) classImpl.getAnnotation(Iri.class)).value());
             URI obj = f.createURI(classIri);
 
-            //adds the designation
-            System.out.println(connection);
-            System.out.println(subj);
-            System.out.println(obj);
-            System.out.println(Arrays.toString(contexts));
-            
             connection.add(subj, RDF.TYPE, obj, contexts);
-            
+
             Method met = classImpl.getMethod("setURI", String.class);
             met.invoke(ob, ontologyURI + instancePrefix + id);
 

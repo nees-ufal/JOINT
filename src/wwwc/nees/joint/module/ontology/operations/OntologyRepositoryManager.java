@@ -10,7 +10,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.openrdf.model.Resource;
 import org.openrdf.model.Statement;
-
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.vocabulary.OWL;
@@ -35,11 +34,11 @@ public class OntologyRepositoryManager {
 
     // VARIABLES ---------------------------------------------------------------
     //Variable to connect with the repository
-    private Repository repository;
+    private final Repository repository;
     //Variable that represents the Connection of the repository
     private RepositoryConnection repoConnection;
     //Variable which creates a factory for several operations
-    private ValueFactory factory;
+    private final ValueFactory factory;
 
     // CONSTRUCTOR -------------------------------------------------------------
     /**
@@ -48,7 +47,6 @@ public class OntologyRepositoryManager {
      *
      */
     public OntologyRepositoryManager() {
-
 
         //Retrieves the repository in the server
         this.repository = RepositoryFactory.getRepository();
@@ -73,11 +71,11 @@ public class OntologyRepositoryManager {
 
             try {
 
-                //Set autoCommit to false, in order to do a transaction
-                this.repoConnection.setAutoCommit(false);
+                //Begins a transaction
+                this.repoConnection.begin();
 
                 //create URI from ontology's URI
-                URI uri = this.factory.createURI(ontologyURI.toString());
+                URI uri = this.factory.createURI(ontologyURI);
 
                 //Add the ontology, based on the ontology's URL,
                 //in the repository specifying the base URI and the context
@@ -118,11 +116,11 @@ public class OntologyRepositoryManager {
             this.repoConnection = this.repository.getConnection();
 
             try {
-                //Set autoCommit to false, in order to do a transaction
-                this.repoConnection.setAutoCommit(false);
+                //Begins a transaction
+                this.repoConnection.begin();
 
                 //create URI from ontology's URI
-                URI uri = this.factory.createURI(ontologyURI.toString());
+                URI uri = this.factory.createURI(ontologyURI);
 
                 //Add the ontology, based on the ontology's file,
                 //in the repository specifying the base URI and the context
@@ -152,7 +150,7 @@ public class OntologyRepositoryManager {
      * Add an ontology in the repository
      *
      * @param path the ontology path
-     * @param uri the ontology uri
+     * @param ontologyURI the ontology uri
      */
     public void addOntology(String path, String ontologyURI) {
         File file = new File(path);
@@ -176,14 +174,14 @@ public class OntologyRepositoryManager {
      * @return List ontologies present in the repository
      */
     public List<String> retrieveListOfOntologies() {
-        List<String> result = new ArrayList<String>();
+        List<String> result = new ArrayList<>();
         try {
             //Get repository connection
             this.repoConnection = this.repository.getConnection();
 
             try {
-                //Set autoCommit to false, in order to do a transaction
-                this.repoConnection.setAutoCommit(false);
+                //Begins a transaction
+                this.repoConnection.begin();
 
                 // Retrieves the statements of the rdf:type owl:ontology
                 RepositoryResult<Statement> statements = this.repoConnection.getStatements((Resource) null, RDF.TYPE, OWL.ONTOLOGY, true);
@@ -204,13 +202,12 @@ public class OntologyRepositoryManager {
                 repoConnection.rollback();
                 Logger
                         .getLogger(OntologyRepositoryManager.class
-                        .getName()).
+                                .getName()).
                         log(Level.SEVERE, null, e);
             } finally {
 
                 //close the repository connection
                 this.repoConnection.close();
-
 
             }
         } catch (RepositoryException repoExc) {
@@ -225,7 +222,7 @@ public class OntologyRepositoryManager {
     /**
      * Removes an ontology of the repository
      *
-     * @param uri the ontology uri
+     * @param ontologyURI the ontology uri
      */
     public void deleteOntology(String ontologyURI) {
         try {
@@ -233,12 +230,11 @@ public class OntologyRepositoryManager {
             this.repoConnection = this.repository.getConnection();
 
             try {
-                //Set autoCommit to false, in order to do a transaction
-                this.repoConnection.setAutoCommit(false);
+                //Begins a transaction
+                this.repoConnection.begin();
 
 //                create URI from ontology's URI
 //                URI uri = this.factory.createURI(ontologyURI.toString());
-
                 StringBuilder builder = new StringBuilder();
                 builder.append("CONSTRUCT \n");
                 builder.append("FROM <");
@@ -248,9 +244,9 @@ public class OntologyRepositoryManager {
 
                 GraphQuery prepareGraphQuery = this.repoConnection.prepareGraphQuery(QueryLanguage.SPARQL, builder.toString());
                 GraphQueryResult evaluate = prepareGraphQuery.evaluate();
-                
+
                 //create URI from ontology's URI
-                URI uri = this.factory.createURI(ontologyURI.toString());
+                URI uri = this.factory.createURI(ontologyURI);
 
                 // Removes the entire ontology of the repository
                 this.repoConnection.remove(evaluate);
@@ -263,17 +259,12 @@ public class OntologyRepositoryManager {
                 repoConnection.rollback();
                 Logger
                         .getLogger(OntologyRepositoryManager.class
-                        .getName()).
+                                .getName()).
                         log(Level.SEVERE, null, e);
             } finally {
 
                 //close the repository connection
                 this.repoConnection.close();
-
-
-
-
-
 
             }
         } catch (RepositoryException repoExc) {
@@ -288,26 +279,25 @@ public class OntologyRepositoryManager {
      * Retrieves an ontology saving in the specified file path
      *
      * @param path the ontology file path
-     * @param uri the ontology uri
+     * @param ontologyURI the ontology uri
      */
-    public void retrieveOntology(String ontologyPath, String ontologyURI) {
+    public void retrieveOntology(String path, String ontologyURI) {
         try {
             //Get repository connection
             this.repoConnection = this.repository.getConnection();
 
             try {
-                //Set autoCommit to false, in order to do a transaction
-                this.repoConnection.setAutoCommit(false);
+                //Begins a transaction
+                this.repoConnection.begin();
 
-                RDFHandler handler = OntologyFileManager.getRDFHandlerForPath(ontologyPath);
+                RDFHandler handler = OntologyFileManager.getRDFHandlerForPath(path);
 
 //                create URI from ontology's URI
-//                URI uri = this.factory.createURI(ontologyURI.toString());
-
+                URI uri = this.factory.createURI(ontologyURI);
                 StringBuilder builder = new StringBuilder();
                 builder.append("CONSTRUCT \n");
                 builder.append("FROM <");
-                builder.append(ontologyURI);
+                builder.append(uri.stringValue());
                 builder.append("> \n");
                 builder.append("WHERE {?x ?y ?z}");
 
@@ -317,19 +307,16 @@ public class OntologyRepositoryManager {
                 // Removes the entire ontology of the repository
                 // using the context of it
 //                this.repoConnection.export(handler, uri);
-
                 //commit the changes made in the repository
                 this.repoConnection.commit();
             } catch (Exception e) {
-
                 //If catch any exception then rollback
                 repoConnection.rollback();
                 Logger
                         .getLogger(OntologyRepositoryManager.class
-                        .getName()).
+                                .getName()).
                         log(Level.SEVERE, null, e);
             } finally {
-
                 //close the repository connection
                 this.repoConnection.close();
             }
@@ -345,7 +332,7 @@ public class OntologyRepositoryManager {
      * Updates an ontology in the repository
      *
      * @param path the ontology file path
-     * @param uri the ontology uri
+     * @param ontologyURI the ontology uri
      */
     public void updateOntology(String path, String ontologyURI) {
         this.deleteOntology(ontologyURI);

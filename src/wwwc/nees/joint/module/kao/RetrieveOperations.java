@@ -56,8 +56,8 @@ public class RetrieveOperations {
      * @return T the desired instance.
      * @throws java.lang.Exception any exception
      */
-    public <T> T retrieveInstance(String instanceURI, Class<T> clazz,
-            RepositoryConnection connection, URI... contexts) throws Exception {
+    public <T> T retrieveInstance(RepositoryConnection connection, String instanceURI, Class<T> clazz,
+            URI... contexts) throws Exception {
         return (T) this.convertOriginalForImpl(connection, instanceURI, clazz, contexts);
     }
 
@@ -71,8 +71,8 @@ public class RetrieveOperations {
      * @return a <code>List</code> with the instances.
      * @throws java.lang.Exception any exception
      */
-    public <T> List<T> retrieveAllInstances(Class<T> clazz,
-            RepositoryConnection connection, URI... contexts) throws Exception {
+    public <T> List<T> retrieveAllInstances(RepositoryConnection connection, Class<T> clazz,
+            URI... contexts) throws Exception {
 
         ValueFactory f = connection.getValueFactory();
 

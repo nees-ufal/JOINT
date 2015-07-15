@@ -138,7 +138,7 @@ public class BackupManager {
             Logger.getLogger("File Joint Backup was stored in " + file.getCanonicalPath());
 
             connection.close();
-            
+
         } catch (QueryEvaluationException | RepositoryException | IOException ex) {
             Logger.getLogger(BackupManager.class.getName()).log(Level.SEVERE, null, ex);
         } catch (Exception e) {
@@ -174,7 +174,7 @@ public class BackupManager {
             buffer.readLine();
 
             mainCon.clear((Resource) null);
-            mainCon.setAutoCommit(false);
+            mainCon.begin();
             ValueFactory f = mainCon.getValueFactory();
 
             try {

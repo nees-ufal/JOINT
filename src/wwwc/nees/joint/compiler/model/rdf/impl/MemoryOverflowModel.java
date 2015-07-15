@@ -234,7 +234,7 @@ public class MemoryOverflowModel extends AbstractModel {
 			assert disk == null;
 			repository = createRepository();
 			connection = repository.getConnection();
-			connection.setAutoCommit(false);
+			connection.begin();
 			disk = new RepositoryModel(connection) {
 
 				@Override
