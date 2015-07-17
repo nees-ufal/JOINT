@@ -729,16 +729,26 @@ public class RetrieveOperations {
      * Gets all the contexts from quadstore.
      *
      * @param connection receives an object of connection with the repository
+     * @param containsTerm term in which the context must to contain
      * @return an URI list
      * @throws org.openrdf.repository.RepositoryException occurs error in the
      * connection with the database.
      */
-    public List<java.net.URI> getContexts(RepositoryConnection connection) throws RepositoryException {
+    public List<java.net.URI> getContexts(RepositoryConnection connection, String... containsTerm) throws RepositoryException {
         //creates a variable to store temporarialy the results
         List<java.net.URI> results = new ArrayList<>();
         RepositoryResult<Resource> contexts = connection.getContextIDs();
         while (contexts.hasNext()) {
-            results.add(java.net.URI.create(contexts.next().stringValue()));
+            Resource context = contexts.next();
+            if (0 < containsTerm.length) {
+                for (String contains : containsTerm) {
+                    if (context.stringValue().contains(contains)) {
+                        results.add(java.net.URI.create(context.stringValue()));
+                    }
+                }
+                continue;
+            }
+            results.add(java.net.URI.create(context.stringValue()));
         }
         contexts.close();
         return results;

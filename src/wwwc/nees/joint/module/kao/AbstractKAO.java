@@ -567,11 +567,12 @@ public abstract class AbstractKAO {
     }
 
     /**
-     * Gets all the contexts from quadstore.
+     * Gets the contexts from quadstore.
      *
+     * @param contains_term term in which the context must to contain
      * @return an URI list
      */
-    public List<java.net.URI> getAllContexts() {
+    public List<java.net.URI> getContexts(String... contains_term) {
         List<java.net.URI> allContexts = null;
         try {
             try {
@@ -580,7 +581,7 @@ public abstract class AbstractKAO {
                 //starts a transaction
                 connection.begin();
                 //performs the query
-                allContexts = new RetrieveOperations().getContexts(connection);
+                allContexts = new RetrieveOperations().getContexts(connection, contains_term);
                 connection.commit();
             } catch (RepositoryException ex) {
                 connection.rollback();
