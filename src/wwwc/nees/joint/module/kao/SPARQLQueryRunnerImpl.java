@@ -10,9 +10,11 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.openrdf.model.Literal;
+import org.openrdf.model.Model;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
 import org.openrdf.model.Value;
@@ -25,6 +27,7 @@ import org.openrdf.query.GraphQueryResult;
 import org.openrdf.query.MalformedQueryException;
 import org.openrdf.query.QueryEvaluationException;
 import org.openrdf.query.QueryLanguage;
+import org.openrdf.query.QueryResults;
 import org.openrdf.query.TupleQuery;
 import org.openrdf.query.TupleQueryResult;
 import org.openrdf.query.TupleQueryResultHandlerException;
@@ -257,9 +260,6 @@ public class SPARQLQueryRunnerImpl implements QueryRunner {
             }
 
         } else {
-
-//                    boolean identified = false;
-//                    boolean literal = false;
             //checks if there is any result
             if (result.hasNext()) {
 
@@ -374,16 +374,17 @@ public class SPARQLQueryRunnerImpl implements QueryRunner {
     }
 
     @Override
-    public String executeGraphQueryAsJSON(RepositoryConnection connection, String query
-    ) throws RepositoryException, MalformedQueryException, QueryEvaluationException, RDFHandlerException {
+    public String executeGraphQueryAsJSONLD(RepositoryConnection connection, String query, boolean graphAsJSONArray) throws RepositoryException, MalformedQueryException, QueryEvaluationException, RDFHandlerException {
 
-        GraphQueryToJSONImpl jsonWriter = new GraphQueryToJSONImpl();
         // Creates the query based on the parameter
         GraphQuery graphQuery = connection.prepareGraphQuery(QueryLanguage.SPARQL, query);
+        
+        GraphQueryToJSONLD jsonldWriter = new GraphQueryToJSONLD(connection);
+        jsonldWriter.setAsJSONArray(graphAsJSONArray);
         // Performs the query
-        graphQuery.evaluate(jsonWriter);
+        graphQuery.evaluate(jsonldWriter);
 
-        return jsonWriter.getJSONAsString();
+        return jsonldWriter.toJSONString();
     }
 
     /**

@@ -48,7 +48,7 @@ public interface QueryRunner {
             throws RepositoryException, MalformedQueryException, QueryEvaluationException,
             TupleQueryResultHandlerException;
 
-    public String executeGraphQueryAsJSON(RepositoryConnection connection, String query) throws Exception;
+    public String executeGraphQueryAsJSONLD(RepositoryConnection connection, String query, boolean graphAsJSONArray) throws Exception;
 
     /**
      * Performs queries in the repository, returning a java.util.Iterator with

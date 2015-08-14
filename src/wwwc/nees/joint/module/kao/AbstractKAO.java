@@ -470,7 +470,11 @@ public abstract class AbstractKAO {
         return results;
     }
 
-    public String executeSPARQLgraphQueryAsJSONString(String query) {
+    public String executeSPARQLgraphQueryAsJSONLDString(String query) {
+        return executeSPARQLgraphQueryAsJSONLDString(query, true);
+    }
+
+    public String executeSPARQLgraphQueryAsJSONLDString(String query, boolean asJSONArray) {
         String results = null;
         try {
             try {
@@ -479,7 +483,7 @@ public abstract class AbstractKAO {
                 //starts a transaction
                 connection.begin();
                 //performs the query
-                results = this.queryRunner.executeGraphQueryAsJSON(connection, query);
+                results = this.queryRunner.executeGraphQueryAsJSONLD(connection, query, asJSONArray);
                 connection.commit();
             } catch (Exception ex) {
                 connection.rollback();
@@ -490,7 +494,7 @@ public abstract class AbstractKAO {
         } catch (RepositoryException ex) {
             Logger.getLogger(AbstractKAO.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return results;
+        return results.toString();
     }
 
     /**
@@ -567,12 +571,14 @@ public abstract class AbstractKAO {
     }
 
     /**
-     * Gets the contexts from quadstore.
+     * Gets contexts from quadstore.
      *
-     * @param contains_term term in which the context must to contain
+     * @param containsTerm is a regular expression that must be matched with the
+     * contexts
      * @return an URI list
+     * @throws NullPointerException occurs when the containsTerm is null.
      */
-    public List<java.net.URI> getContexts(String... contains_term) {
+    public List<java.net.URI> getContexts(String containsTerm) throws MalformedQueryException, QueryEvaluationException, NullPointerException, Exception {
         List<java.net.URI> allContexts = null;
         try {
             try {
@@ -581,7 +587,7 @@ public abstract class AbstractKAO {
                 //starts a transaction
                 connection.begin();
                 //performs the query
-                allContexts = new RetrieveOperations().getContexts(connection, contains_term);
+                allContexts = new RetrieveOperations().getContexts(connection, containsTerm);
                 connection.commit();
             } catch (RepositoryException ex) {
                 connection.rollback();
@@ -613,7 +619,7 @@ public abstract class AbstractKAO {
         return this.classe;
     }
 
-    public URI[] getContexts() {
+    private URI[] getContexts() {
         return contexts;
     }
 

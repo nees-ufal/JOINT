@@ -12,7 +12,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import wwwc.nees.joint.compiler.annotations.Iri;
 import org.openrdf.model.Literal;
-import org.openrdf.model.Resource;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
 import org.openrdf.model.Value;
@@ -283,9 +282,8 @@ public class RetrieveOperations {
                         //crawls the list of values converting to the
                         //specific Class
                         for (Value objValue : listValues) {
-                            String objIt = objValue.stringValue();
                             //gets a new instance with its properties not loaded
-                            returnSet.add(this.getNotLoadedObject(objIt, parameterClassName));
+                            returnSet.add(this.getNotLoadedObject(objValue.stringValue(), parameterClassName));
                         }
                     }
                     //invokes the method with the converted parameter
@@ -459,7 +457,6 @@ public class RetrieveOperations {
     }
 
     public List<Object> convertCollectionOriginalForImpl2(RepositoryConnection connection, List<String> instancesName, Class clazz, URI... contexts) throws Exception {
-        HashMap<String, Object> result = new HashMap<>();
         HashMap<String, List<Method>> methodMap = new HashMap<>();
 
         // checks if it is a java object
@@ -494,7 +491,8 @@ public class RetrieveOperations {
         //be parsed
         GraphQueryConstruct graphQueryConstruct = new GraphQueryConstruct(connection);
         GraphQueryResult stts = graphQueryConstruct.getStatementsAsGraphQuery(instancesName, null, null, contexts);
-
+        
+        HashMap<String, Object> result = new HashMap<>();
         //iterates the previous graph result
         while (stts.hasNext()) {
             Statement statement = stts.next();
@@ -726,31 +724,28 @@ public class RetrieveOperations {
     }
 
     /**
-     * Gets all the contexts from quadstore.
+     * Gets contexts from quadstore.
      *
      * @param connection receives an object of connection with the repository
-     * @param containsTerm term in which the context must to contain
+     * @param containsTerm is a regular expression that must be matched with the
+     * contexts
      * @return an URI list
      * @throws org.openrdf.repository.RepositoryException occurs error in the
      * connection with the database.
+     * @throws NullPointerException occurs when the containsTerm is null.
      */
-    public List<java.net.URI> getContexts(RepositoryConnection connection, String... containsTerm) throws RepositoryException {
+    public List<java.net.URI> getContexts(RepositoryConnection connection, String containsTerm) throws RepositoryException, NullPointerException, Exception {
+        StringBuilder query = new StringBuilder();
+        query.append("select distinct ?str_graph ")
+                .append("where{graph ?g{?s ?p ?o} bind(str(?g) AS ?str_graph) ")
+                .append("filter regex(?str_graph,'").append(containsTerm.toString()).append("','i')}");
+
+        List<Object> executeQueryAsList = new SPARQLQueryRunnerImpl().executeQueryAsList(connection, query.toString());
         //creates a variable to store temporarialy the results
         List<java.net.URI> results = new ArrayList<>();
-        RepositoryResult<Resource> contexts = connection.getContextIDs();
-        while (contexts.hasNext()) {
-            Resource context = contexts.next();
-            if (0 < containsTerm.length) {
-                for (String contains : containsTerm) {
-                    if (context.stringValue().contains(contains)) {
-                        results.add(java.net.URI.create(context.stringValue()));
-                    }
-                }
-                continue;
-            }
-            results.add(java.net.URI.create(context.stringValue()));
+        for (Object o : executeQueryAsList) {
+            results.add(java.net.URI.create(o.toString()));
         }
-        contexts.close();
         return results;
     }
 }
