@@ -1,4 +1,4 @@
-package wwwc.nees.joint.module.kao;
+package wwwc.nees.joint.module.kao.retrieve;
 
 import info.aduna.iteration.Iterations;
 import java.lang.reflect.Method;
@@ -21,6 +21,10 @@ import org.openrdf.repository.RepositoryException;
 import org.openrdf.repository.RepositoryResult;
 import wwwc.nees.joint.compiler.annotations.Iri;
 import wwwc.nees.joint.model.JOINTResource;
+import wwwc.nees.joint.module.kao.AbstractKAO;
+import wwwc.nees.joint.module.kao.ConceptsPackageInfo;
+import wwwc.nees.joint.module.kao.DatatypeManager;
+import wwwc.nees.joint.module.kao.RepositoryFactory;
 
 /**
  *

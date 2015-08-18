@@ -23,7 +23,7 @@ import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
 import org.openrdf.repository.RepositoryResult;
 import org.openrdf.repository.http.HTTPRepository;
-import wwwc.nees.joint.module.kao.GraphQueryConstruct;
+import wwwc.nees.joint.module.kao.retrieve.GraphQueryConstruct;
 import wwwc.nees.joint.module.kao.RepositoryFactory;
 
 /**

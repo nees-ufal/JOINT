@@ -1,4 +1,4 @@
-package wwwc.nees.joint.module.kao;
+package wwwc.nees.joint.module.kao.retrieve;
 
 import java.util.List;
 import java.util.logging.Level;
@@ -6,6 +6,7 @@ import java.util.logging.Logger;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
+import org.codehaus.jettison.json.JSONString;
 import org.openrdf.query.BindingSet;
 import org.openrdf.query.QueryResultHandlerException;
 import org.openrdf.query.TupleQueryResultHandler;
@@ -14,15 +15,11 @@ import org.openrdf.query.TupleQueryResultHandlerException;
 /**
  * @author williams
  */
-public class TupleQueryToJSONImpl implements TupleQueryResultHandler {
+public class TupleQueryToJSONImpl implements TupleQueryResultHandler, JSONString {
 
     private final JSONArray json = new JSONArray();
     private JSONObject json_aux;
     private List<String> list;
-
-    public String getJSONAsString() {        
-        return json.toString();
-    }
 
     @Override
     public void handleBoolean(boolean bln) throws QueryResultHandlerException {
@@ -52,5 +49,10 @@ public class TupleQueryToJSONImpl implements TupleQueryResultHandler {
             }
         }
         json.put(json_aux);
+    }
+
+    @Override
+    public String toJSONString() {
+        return json.toString();
     }
 }

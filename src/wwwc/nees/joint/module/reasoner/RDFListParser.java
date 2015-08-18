@@ -5,7 +5,7 @@
 package wwwc.nees.joint.module.reasoner;
 
 import wwwc.nees.joint.model.RDFUris;
-import wwwc.nees.joint.module.kao.SPARQLQueryRunnerImpl;
+import wwwc.nees.joint.module.kao.retrieve.SPARQLQueryRunnerImpl;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;

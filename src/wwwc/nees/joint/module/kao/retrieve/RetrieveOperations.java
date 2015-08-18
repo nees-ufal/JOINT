@@ -1,4 +1,4 @@
-package wwwc.nees.joint.module.kao;
+package wwwc.nees.joint.module.kao.retrieve;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -22,6 +22,8 @@ import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
 import org.openrdf.repository.RepositoryResult;
 import wwwc.nees.joint.model.JOINTResource;
+import wwwc.nees.joint.module.kao.ConceptsPackageInfo;
+import wwwc.nees.joint.module.kao.DatatypeManager;
 
 /**
  * @author Olavo
@@ -491,8 +493,8 @@ public class RetrieveOperations {
         //be parsed
         GraphQueryConstruct graphQueryConstruct = new GraphQueryConstruct(connection);
         GraphQueryResult stts = graphQueryConstruct.getStatementsAsGraphQuery(instancesName, null, null, contexts);
-        
-        HashMap<String, Object> result = new HashMap<>();
+
+        Map<String, Object> result = new HashMap<>();
         //iterates the previous graph result
         while (stts.hasNext()) {
             Statement statement = stts.next();

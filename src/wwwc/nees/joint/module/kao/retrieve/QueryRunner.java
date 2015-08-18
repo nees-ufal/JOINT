@@ -1,4 +1,4 @@
-package wwwc.nees.joint.module.kao;
+package wwwc.nees.joint.module.kao.retrieve;
 
 import java.util.Iterator;
 import java.util.List;
@@ -48,6 +48,18 @@ public interface QueryRunner {
             throws RepositoryException, MalformedQueryException, QueryEvaluationException,
             TupleQueryResultHandlerException;
 
+    /**
+     * Performs query in the repository, returning the results in an adapted
+     * format from JSON-LD specification
+     *
+     * @param connection receives an object of connection with the repository
+     * @param query the String with the query to be performed.
+     * @param graphAsJSONArray defines if the <b><code>@graph</code> key</b> is
+     * a JSON Array. If value is true, then is an array, else, is a JSON Object
+     * where the <b><code>@id</code> key</b> are the keys of the objects. <b>By
+     * default it's <code>true</code></b>.
+     * @return a JSON as String
+     */
     public String executeGraphQueryAsJSONLD(RepositoryConnection connection, String query, boolean graphAsJSONArray) throws Exception;
 
     /**

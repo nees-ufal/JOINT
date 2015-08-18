@@ -1,5 +1,8 @@
 package wwwc.nees.joint.module.kao;
 
+import wwwc.nees.joint.module.kao.retrieve.QueryRunner;
+import wwwc.nees.joint.module.kao.retrieve.RetrieveOperations;
+import wwwc.nees.joint.module.kao.retrieve.SPARQLQueryRunnerImpl;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -36,8 +39,8 @@ public abstract class AbstractKAO {
     // URI[] of graph to save triples
     private URI[] contexts;
 
-// CONSTRUCTOR
-// -------------------------------------------------------------------------
+    // CONSTRUCTOR
+    // -------------------------------------------------------------------------
     /**
      * Class Constructor, starts the <code>Repository</code> and creates a
      * <code>ObjectConnection</code>, to do persistence operations.
@@ -470,11 +473,29 @@ public abstract class AbstractKAO {
         return results;
     }
 
+    /**
+     * Performs query in the repository, returning the results in an adapted
+     * format from JSON-LD specification
+     *
+     * @param query the String with the query to be performed.
+     * @return a JSON as String
+     */
     public String executeSPARQLgraphQueryAsJSONLDString(String query) {
         return executeSPARQLgraphQueryAsJSONLDString(query, true);
     }
 
-    public String executeSPARQLgraphQueryAsJSONLDString(String query, boolean asJSONArray) {
+    /**
+     * Performs query in the repository, returning the results in an adapted
+     * format from JSON-LD specification
+     *
+     * @param query the String with the query to be performed.
+     * @param graphAsJSONArray defines if the <b><code>@graph</code> key</b> is
+     * a JSON Array. If value is true, then is an array, else, is a JSON Object
+     * where the <b><code>@id</code> key</b> are the keys of the objects. <b>By
+     * default it's <code>true</code></b>.
+     * @return a JSON as String
+     */
+    public String executeSPARQLgraphQueryAsJSONLDString(String query, boolean graphAsJSONArray) {
         String results = null;
         try {
             try {
@@ -483,7 +504,7 @@ public abstract class AbstractKAO {
                 //starts a transaction
                 connection.begin();
                 //performs the query
-                results = this.queryRunner.executeGraphQueryAsJSONLD(connection, query, asJSONArray);
+                results = this.queryRunner.executeGraphQueryAsJSONLD(connection, query, graphAsJSONArray);
                 connection.commit();
             } catch (Exception ex) {
                 connection.rollback();
@@ -494,7 +515,7 @@ public abstract class AbstractKAO {
         } catch (RepositoryException ex) {
             Logger.getLogger(AbstractKAO.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return results.toString();
+        return results;
     }
 
     /**

@@ -1,4 +1,4 @@
-package wwwc.nees.joint.module.kao;
+package wwwc.nees.joint.module.kao.retrieve;
 
 import info.aduna.iteration.Iterations;
 import wwwc.nees.joint.model.OWLUris;
@@ -10,24 +10,20 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.openrdf.model.Literal;
-import org.openrdf.model.Model;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
 import org.openrdf.model.Value;
 import org.openrdf.model.vocabulary.RDF;
 import org.openrdf.query.Binding;
 import org.openrdf.query.BindingSet;
-import org.openrdf.query.BooleanQuery;
 import org.openrdf.query.GraphQuery;
 import org.openrdf.query.GraphQueryResult;
 import org.openrdf.query.MalformedQueryException;
 import org.openrdf.query.QueryEvaluationException;
 import org.openrdf.query.QueryLanguage;
-import org.openrdf.query.QueryResults;
 import org.openrdf.query.TupleQuery;
 import org.openrdf.query.TupleQueryResult;
 import org.openrdf.query.TupleQueryResultHandlerException;
@@ -36,6 +32,7 @@ import org.openrdf.query.UpdateExecutionException;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
 import org.openrdf.rio.RDFHandlerException;
+import wwwc.nees.joint.module.kao.DatatypeManager;
 
 /**
  * Class which implements QueryRunner Interface for performing SPARQL queries in
@@ -369,21 +366,31 @@ public class SPARQLQueryRunnerImpl implements QueryRunner {
         // Performs the query
         tupleQuery.evaluate(jsonWriter);
 
-        return jsonWriter.getJSONAsString();
+        return jsonWriter.toJSONString();
 
     }
 
+    /**
+     * Performs query in the repository, returning the results in an adapted
+     * format from JSON-LD specification
+     *
+     * @param connection receives an object of connection with the repository
+     * @param query the String with the query to be performed.
+     * @param graphAsJSONArray defines if the <b><code>@graph</code> key</b> is
+     * a JSON Array. If value is true, then is an array, else, is a JSON Object
+     * where the <b><code>@id</code> key</b> are the keys of the objects. <b>By
+     * default it's <code>true</code></b>.
+     * @return a JSON as String
+     */
     @Override
     public String executeGraphQueryAsJSONLD(RepositoryConnection connection, String query, boolean graphAsJSONArray) throws RepositoryException, MalformedQueryException, QueryEvaluationException, RDFHandlerException {
 
-        // Creates the query based on the parameter
-        GraphQuery graphQuery = connection.prepareGraphQuery(QueryLanguage.SPARQL, query);
-        
         GraphQueryToJSONLD jsonldWriter = new GraphQueryToJSONLD(connection);
         jsonldWriter.setAsJSONArray(graphAsJSONArray);
+        // Creates the query based on the parameter
+        GraphQuery graphQuery = connection.prepareGraphQuery(QueryLanguage.SPARQL, query);
         // Performs the query
         graphQuery.evaluate(jsonldWriter);
-
         return jsonldWriter.toJSONString();
     }
 
@@ -413,15 +420,18 @@ public class SPARQLQueryRunnerImpl implements QueryRunner {
      * @param query the <code>String</code> with the query to be performed.
      *
      * @return <code>boolean<Object></code> true or false.
+     * @throws org.openrdf.repository.RepositoryException if occur repository
+     * connection error
+     * @throws org.openrdf.query.MalformedQueryException if occur error in the
+     * query
+     * @throws org.openrdf.query.QueryEvaluationException if occur error in the
+     * query
      */
     @Override
     public boolean executeBooleanQuery(RepositoryConnection connection, String query)
-            throws Exception {
-        // Creates the query based on the parameter
-        BooleanQuery objectQuery = connection.prepareBooleanQuery(QueryLanguage.SPARQL, query);
-
-        // Performs the query
-        return objectQuery.evaluate();
+            throws RepositoryException, MalformedQueryException, QueryEvaluationException {
+        // Creates and performs the query based on the parameter
+        return connection.prepareBooleanQuery(QueryLanguage.SPARQL, query).evaluate();
     }
 
     /**
