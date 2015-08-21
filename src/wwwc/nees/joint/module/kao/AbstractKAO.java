@@ -160,6 +160,10 @@ public abstract class AbstractKAO {
      * will be performed.
      */
     public void delete(String ontologyURI, String instanceName, java.net.URI... contexts) {
+        delete(ontologyURI + instanceName, contexts);
+    }
+
+    public void delete(String instanceURI, java.net.URI... contexts) {
         setContexts(contexts);
 
         try {
@@ -170,8 +174,7 @@ public abstract class AbstractKAO {
                 connection.begin();
                 //removes the quads that have the corresponding subject 
 //                removeOpe.remove(ontologyURI, instanceName, con, this.getContexts());
-                String subj = ontologyURI + instanceName;
-                new RemoveOperations().remove_SPARQLUpdate(connection, subj, this.getContexts());
+                new RemoveOperations().remove_SPARQLUpdate(connection, instanceURI, this.getContexts());
 
                 // Saves the object in the repository
                 connection.commit();
