@@ -313,7 +313,7 @@ public class RDFClass extends RDFEntity {
                 builder.imports("java.io.Serializable");
                 builder.imports("java.util.List");
                 builder.imports("java.util.ArrayList");
-                builder.imports("wwwc.nees.joint.module.kao.LazyLoader");
+                builder.imports("wwwc.nees.joint.module.kao.retrieve.LazyLoader");
                 builder.imports("wwwc.nees.joint.model.JOINTResource");
             } else {
                 builder.pkg(pkg);
@@ -321,7 +321,7 @@ public class RDFClass extends RDFEntity {
                 builder.imports("java.io.Serializable");
                 builder.imports("java.util.List");
                 builder.imports("java.util.ArrayList");
-                builder.imports("wwwc.nees.joint.module.kao.LazyLoader");
+                builder.imports("wwwc.nees.joint.module.kao.retrieve.LazyLoader");
                 builder.imports("wwwc.nees.joint.model.JOINTResource");
             }
             classImplHeader(simple, builder);
