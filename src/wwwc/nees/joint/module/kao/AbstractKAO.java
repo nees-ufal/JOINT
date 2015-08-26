@@ -602,7 +602,7 @@ public abstract class AbstractKAO {
      * @return an URI list
      * @throws NullPointerException occurs when the containsTerm is null.
      */
-    public List<java.net.URI> getContexts(String containsTerm) throws MalformedQueryException, QueryEvaluationException, NullPointerException, Exception {
+    public List<java.net.URI> getContexts(String containsTerm) {
         List<java.net.URI> allContexts = null;
         try {
             try {
@@ -613,7 +613,10 @@ public abstract class AbstractKAO {
                 //performs the query
                 allContexts = new RetrieveOperations().getContexts(connection, containsTerm);
                 connection.commit();
-            } catch (RepositoryException ex) {
+            } catch (RepositoryException | NullPointerException ex) {
+                connection.rollback();
+                Logger.getLogger(AbstractKAO.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (Exception ex) {
                 connection.rollback();
                 Logger.getLogger(AbstractKAO.class.getName()).log(Level.SEVERE, null, ex);
             } finally {

@@ -48,8 +48,10 @@ public class GraphQueryToJSONLD implements RDFHandler, JSONString {
     private final Map<String, Boolean> areArray;
     private boolean asJSONArray = true;
     private BidiMap<String, String> predicates;
+    private List<String> exists = new ArrayList<>();
 
     private final RepositoryConnection connection;
+    private final ValueFactory vf;
 
     public GraphQueryToJSONLD(RepositoryConnection connection) {
         predicates = new DualHashBidiMap<>();
@@ -65,6 +67,7 @@ public class GraphQueryToJSONLD implements RDFHandler, JSONString {
         areArray = new HashMap<>();
 
         this.connection = connection;
+        this.vf = connection.getValueFactory();
     }
 
     public void setAsJSONArray(boolean bool) {
@@ -105,7 +108,6 @@ public class GraphQueryToJSONLD implements RDFHandler, JSONString {
                 // Insert into the JSON the predicates that doesn't were found in the repository                
                 for (Map.Entry<String, String> pred : predicates.entrySet()) {
                     handlePredicate(pred.getKey(), pred.getValue(), null);
-//                    handleTypeFromSubject(pred.getKey(), pred.getValue());
                 }
                 predicates.clear();
             } catch (RepositoryException | MalformedQueryException | QueryEvaluationException ex) {
@@ -114,7 +116,6 @@ public class GraphQueryToJSONLD implements RDFHandler, JSONString {
 
             // Handle all triples that can have objects instead of Literal.
             handleTriplesWithObject();
-
             /**
              * Now will be converted as JSON Array or maintained as JSON Object.
              * For this, each property from JSON OBJECT will be parsed as a JSON
@@ -124,23 +125,25 @@ public class GraphQueryToJSONLD implements RDFHandler, JSONString {
             while (keys_aux.hasNext()) {
                 String subject = keys_aux.next();
                 JSONObject next = results_graph.getJSONObject(subject);
-                ValueFactory vf = connection.getValueFactory();
+
                 URI subj = vf.createURI(next.getString("@id"));
                 RepositoryResult<Statement> statements = connection.getStatements(subj, RDF.TYPE, null, true);
                 while (statements.hasNext()) {
                     Statement statement = statements.next();
-                    results.getJSONObject("@context").accumulate("@type", statement.getObject());
+                    results.getJSONObject("@context").accumulate("@type", statement.getObject().stringValue());
                 }
                 statements.close();
                 break;
             }
             if (asJSONArray) {
                 Iterator<String> keys = results_graph.keys();
+                JSONArray array = new JSONArray();
                 while (keys.hasNext()) {
                     String subject = keys.next();
                     JSONObject next = results_graph.getJSONObject(subject);
-                    results.accumulate("@graph", next);
+                    array.put(next);
                 }
+                results.put("@graph", array);
             } else {
                 results.put("@graph", results_graph);
             }
@@ -160,6 +163,9 @@ public class GraphQueryToJSONLD implements RDFHandler, JSONString {
     private void handlePredicate(String predicatePrefix, String predicateURI, String type) throws JSONException, RepositoryException {
         if (type == null) {
             type = handleSubjectTypeFromPredicate(predicatePrefix);
+            if (type == null) {
+                return;
+            }
         }
         JSONObject cont = new JSONObject()
                 .put("@id", predicateURI)
@@ -207,8 +213,20 @@ public class GraphQueryToJSONLD implements RDFHandler, JSONString {
                     } else {
                         areArray.put(predicate_prefix, false);
                     }
-                    jsonObject.accumulate(predicate_prefix, object);
+                    Object get = jsonObject.get(predicate_prefix);
 
+                    if (get instanceof JSONArray) {
+                        JSONArray a = (JSONArray) get;
+                        for (int i = 0; i < a.length(); i++) {
+                            if (a.getString(i).equals(object)) {
+                                exists.add(subject);
+                                break;
+                            }
+                        }
+                    } else if (get.toString().equals(object)) {
+                        exists.add(subject);
+                    }
+                    jsonObject.accumulate(predicate_prefix, object);
                 } else if (areArray.containsKey(predicate_prefix)) {
                     jsonObject.append(predicate_prefix, object);
                 } else {
@@ -233,12 +251,27 @@ public class GraphQueryToJSONLD implements RDFHandler, JSONString {
     public void handleComment(String string) throws RDFHandlerException {
     }
 
+    private JSONObject getJSONObject(String key) throws JSONException {
+        JSONObject result = null;
+        if (results_graph.has(key)) {
+            result = results_graph.getJSONObject(key);
+        } else if (results_removed.has(key)) {
+            result = results_removed.getJSONObject(key);
+        }
+        return result;
+    }
+
     private void handleTriplesWithObject() throws JSONException {
         for (String[] triple : triplesWithObjects) {
             JSONObject object;
             if (results_graph.has(triple[2])) {
-                object = (JSONObject) results_graph.remove(triple[2]);
-                results_removed.put(triple[2], object);
+                if (exists.contains(triple[2])) {
+                    object = results_graph.getJSONObject(triple[2]);
+                } else {
+                    object = (JSONObject) results_graph.remove(triple[2]);
+                    results_removed.put(triple[2], object);
+                }
+
             } else if (results_removed.has(triple[2])) {
                 object = results_removed.getJSONObject(triple[2]);
             } else {
@@ -260,24 +293,32 @@ public class GraphQueryToJSONLD implements RDFHandler, JSONString {
         Iterator<String> keys = results_graph.keys();
         String id = null;
         while (keys.hasNext()) {
-            if (results_graph.getJSONObject(keys.next()).has(predicatePrefix)) {
-                String s = results_graph.getJSONObject(keys.next()).get(predicatePrefix).toString();
-                if (s.contains("@id")) {
-                    id = new JSONObject(s).getString("@id");
-                } else {
-                    id = s;
+            String key = keys.next();
+            if (results_graph.getJSONObject(key).has(predicatePrefix)) {
+                Object s = results_graph.getJSONObject(key).get(predicatePrefix);
+                if (!(s instanceof JSONArray)) {
+                    if (s instanceof JSONObject) {
+                        JSONObject s_aux = (JSONObject) s;
+                        if (s_aux.has("@id")) {
+                            id = s_aux.getString("@id");
+                        }
+                    } else {
+                        id = s.toString();
+                    }
+                    break;
                 }
-                break;
             }
         }
-        URI subj = connection.getValueFactory().createURI(id);
-        RepositoryResult<Statement> statements = connection.getStatements(subj, RDF.TYPE, null, true);
-        while (statements.hasNext()) {
-            Statement statement = statements.next();
-            statements.close();
-            return statement.getObject().stringValue();
+        try {
+            URI subj = vf.createURI(id);
+            RepositoryResult<Statement> statements = connection.getStatements(subj, RDF.TYPE, null, true);
+            while (statements.hasNext()) {
+                Statement statement = statements.next();
+                statements.close();
+                return statement.getObject().stringValue();
+            }
+        } catch (IllegalArgumentException | NullPointerException i) {
         }
-        statements.close();
         return null;
     }
 
