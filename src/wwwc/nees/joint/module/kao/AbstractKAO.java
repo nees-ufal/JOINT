@@ -374,9 +374,9 @@ public abstract class AbstractKAO {
     public Object executeSPARQLquerySingleResult(String query) {
         Object object = null;
         try {
+            //retrieves a connection with the repository
+            connection = this.repository.getConnection();
             try {
-                //retrieves a connection with the repository
-                connection = this.repository.getConnection();
                 //starts a transaction
                 connection.begin();
                 //performs the query
@@ -408,9 +408,9 @@ public abstract class AbstractKAO {
         setContexts(contexts);
         List<Object> objects = null;
         try {
+            //retrieves a connection with the repository
+            connection = this.repository.getConnection();
             try {
-                //retrieves a connection with the repository
-                connection = this.repository.getConnection();
                 //starts a transaction
                 connection.begin();
                 //performs the query
@@ -433,9 +433,9 @@ public abstract class AbstractKAO {
         setContexts(contexts);
         List<Object> objects = null;
         try {
+            //retrieves a connection with the repository
+            connection = this.repository.getConnection();
             try {
-                //retrieves a connection with the repository
-                connection = this.repository.getConnection();
                 //starts a transaction
                 connection.begin();
                 //performs the query
@@ -456,9 +456,9 @@ public abstract class AbstractKAO {
     public String executeSPARQLtupleQueryAsJSONString(String query) {
         String results = null;
         try {
+            //retrieves a connection with the repository
+            connection = this.repository.getConnection();
             try {
-                //retrieves a connection with the repository
-                connection = this.repository.getConnection();
                 //starts a transaction
                 connection.begin();
                 //performs the query
@@ -501,9 +501,9 @@ public abstract class AbstractKAO {
     public String executeSPARQLgraphQueryAsJSONLDString(String query, boolean graphAsJSONArray) {
         String results = null;
         try {
+            //retrieves a connection with the repository
+            connection = this.repository.getConnection();
             try {
-                //retrieves a connection with the repository
-                connection = this.repository.getConnection();
                 //starts a transaction
                 connection.begin();
                 //performs the query
@@ -547,9 +547,9 @@ public abstract class AbstractKAO {
     public boolean executeBooleanQuery(String query) {
         boolean result = false;
         try {
+            //retrieves a connection with the repository
+            connection = this.repository.getConnection();
             try {
-                //retrieves a connection with the repository
-                connection = this.repository.getConnection();
                 //starts a transaction
                 connection.begin();
                 //performs the query
@@ -575,9 +575,9 @@ public abstract class AbstractKAO {
      */
     public void executeSPARQLUpdateQuery(String query) {
         try {
+            //retrieves a connection with the repository
+            connection = this.repository.getConnection();
             try {
-                //retrieves a connection with the repository
-                connection = this.repository.getConnection();
                 //starts a transaction
                 connection.begin();
                 //performs the query
@@ -605,9 +605,9 @@ public abstract class AbstractKAO {
     public List<java.net.URI> getContexts(String containsTerm) {
         List<java.net.URI> allContexts = null;
         try {
+            //retrieves a connection with the repository
+            connection = this.repository.getConnection();
             try {
-                //retrieves a connection with the repository
-                connection = this.repository.getConnection();
                 //starts a transaction
                 connection.begin();
                 //performs the query
