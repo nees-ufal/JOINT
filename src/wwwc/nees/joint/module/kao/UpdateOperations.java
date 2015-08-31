@@ -26,6 +26,7 @@ public class UpdateOperations {
     private final String BOOLEAN = "java.lang.Boolean";
     private final String INTEGER = "java.lang.Integer";
     private final String FLOAT = "java.lang.Float";
+    private final String DOUBLE = "java.lang.Double";
     private final String DATE = "com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl";
     private ValueFactory f;
 
@@ -34,6 +35,7 @@ public class UpdateOperations {
                 || className.equals(BOOLEAN)
                 || className.equals(INTEGER)
                 || className.equals(FLOAT)
+                || className.equals(DOUBLE)
                 || className.equals(DATE)
                 || className.equals(OBJECT)) {
             return true;
@@ -48,6 +50,8 @@ public class UpdateOperations {
             return this.f.createLiteral(Integer.parseInt(value));
         } else if (className.equals(FLOAT)) {
             return this.f.createLiteral(Float.parseFloat(value));
+        } else if (className.equals(DOUBLE)) {
+            return this.f.createLiteral(Double.parseDouble(value));
         } else if (className.equals(DATE)) {
             return this.f.createLiteral(XMLGregorianCalendarImpl.parse(value));
         }
