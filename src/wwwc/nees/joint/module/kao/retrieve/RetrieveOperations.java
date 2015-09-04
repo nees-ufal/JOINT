@@ -736,19 +736,38 @@ public class RetrieveOperations {
      * connection with the database.
      * @throws NullPointerException occurs when the containsTerm is null.
      */
-    public List<java.net.URI> getContexts(RepositoryConnection connection, String containsTerm)
+    public List<Object> getDatasets(RepositoryConnection connection, String containsTerm)
             throws RepositoryException, NullPointerException, Exception {
         StringBuilder query = new StringBuilder();
         query.append("select distinct ?str_graph ")
-                .append("where{graph ?g{?s ?p ?o} bind(str(?g) AS ?str_graph) ")
-                .append("filter regex(?str_graph,'").append(containsTerm.toString()).append("','i')}");
-
-        List<Object> executeQueryAsList = new SPARQLQueryRunnerImpl().executeQueryAsList(connection, query.toString());
-        //creates a variable to store temporarialy the results
-        List<java.net.URI> results = new ArrayList<>();
-        for (Object o : executeQueryAsList) {
-            results.add(java.net.URI.create(o.toString()));
+                .append("where{graph ?g{?s ?p ?o} bind(str(?g) AS ?str_graph) ");
+        if (containsTerm != null) {
+            query.append("filter regex(?str_graph,'").append(containsTerm).append("','i')");
         }
-        return results;
+
+        query.append("}");
+
+        //creates a variable to store temporarialy the results
+        return (List<Object>) new SPARQLQueryRunnerImpl()
+                .executeQueryAsList(connection, query.toString());
     }
+
+//    public List<java.net.URI> getContexts(RepositoryConnection connection, String containsTerm)
+//            throws RepositoryException, NullPointerException, Exception {
+//        StringBuilder query = new StringBuilder();
+//        query.append("select distinct ?str_graph ")
+//                .append("where{graph ?g{?s ?p ?o} bind(str(?g) AS ?str_graph) ");
+//        if (containsTerm != null) {
+//            query.append("filter regex(?str_graph,'").append(containsTerm).append("','i')");
+//        }
+//        query.append("}");
+//
+//        List<Object> executeQueryAsList = new SPARQLQueryRunnerImpl().executeQueryAsList(connection, query.toString());
+//        //creates a variable to store temporarialy the results
+//        List<java.net.URI> results = new ArrayList<>();
+//        for (Object o : executeQueryAsList) {
+//            results.add(java.net.URI.create(o.toString()));
+//        }
+//        return results;
+//    }
 }

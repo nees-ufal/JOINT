@@ -602,8 +602,8 @@ public abstract class AbstractKAO {
      * @return an URI list
      * @throws NullPointerException occurs when the containsTerm is null.
      */
-    public List<java.net.URI> getContexts(String containsTerm) {
-        List<java.net.URI> allContexts = null;
+    public List<Object> getDatasets(String containsTerm) {
+        List<Object> datasets = null;
         try {
             //retrieves a connection with the repository
             connection = this.repository.getConnection();
@@ -611,7 +611,7 @@ public abstract class AbstractKAO {
                 //starts a transaction
                 connection.begin();
                 //performs the query
-                allContexts = new RetrieveOperations().getContexts(connection, containsTerm);
+                datasets = new RetrieveOperations().getDatasets(connection, containsTerm);
                 connection.commit();
             } catch (RepositoryException | NullPointerException ex) {
                 connection.rollback();
@@ -625,7 +625,7 @@ public abstract class AbstractKAO {
         } catch (RepositoryException ex) {
             Logger.getLogger(AbstractKAO.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return allContexts;
+        return datasets;
     }
 
     /**
