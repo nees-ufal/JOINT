@@ -19,7 +19,7 @@ import wwwc.nees.joint.model.JOINTResource;
  *
  * @author Olavo
  */
-public class UpdateOperations {
+public class UpdateOperations extends Operation{
 
     private final String STRING = "java.lang.String";
     private final String OBJECT = "java.lang.Object";
@@ -73,22 +73,22 @@ public class UpdateOperations {
         List<String> modifiedMethods = ((JOINTResource) instance).getInnerModifiedFields();
 
         List<String> auxModifiedMethods = new ArrayList(modifiedMethods);
-
         //for over these modified methods
         for (String methodName : auxModifiedMethods) {
 
             // gets the method
             Method method = classe.getMethod("get" + methodName);
-
+            
             method.setAccessible(true);
 
             //pega o predicado da propriedade
             Iri iri = method.getAnnotation(Iri.class);
             URI pred = f.createURI(iri.value());
-
+            
             //connection.remove(suj, pred, null, contexts);
             RemoveOperations.removeStatements(connection, suj.toString(), pred.toString(), null, contexts);
-
+            System.out.println("Removido!");
+            
             Object returnOb = method.invoke(instance);
 
             if (returnOb == null) { //caso de nao ter nenhuma valor a propriedade

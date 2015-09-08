@@ -15,7 +15,7 @@ import wwwc.nees.joint.compiler.annotations.Iri;
 /**
  * @author Olavo
  */
-public class CreateOperations {
+public class CreateOperations extends Operation{
 
     private Method lazyLoaded;
     private Method setURI;
