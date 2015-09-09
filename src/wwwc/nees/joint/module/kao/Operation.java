@@ -78,12 +78,11 @@ public class Operation {
             query.append(obj).append("} ");
         }
 
-        query.append("GRAPH ?g {?s ?p ?o.}}");       
+        query.append("GRAPH ?g {?s ?p ?o.}}");
         
-        System.out.println(query.toString());
         //evaluate the graph result
 //        Update prepareGraphQuery = connection.prepareUpdate(QueryLanguage.SPARQL, query.toString());
-        BooleanQuery prepareGraphQuery = connection.prepareBooleanQuery(QueryLanguage.SERQL, query.toString());
+        BooleanQuery prepareGraphQuery = connection.prepareBooleanQuery(QueryLanguage.SPARQL, query.toString());
         return prepareGraphQuery.evaluate();
     }
 

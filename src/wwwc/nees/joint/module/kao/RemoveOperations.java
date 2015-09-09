@@ -85,7 +85,7 @@ public class RemoveOperations extends Operation {
         } catch (QueryEvaluationException ex) {
             Logger.getLogger(RemoveOperations.class.getName()).log(Level.SEVERE, null, ex);
         }
-
+        
         if (existsStatements) {
             query.append("DELETE {");
             if (contexts.length == 0) {
