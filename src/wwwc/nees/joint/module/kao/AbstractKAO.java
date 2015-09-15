@@ -344,7 +344,7 @@ public abstract class AbstractKAO {
                 connection.begin();
 
                 ob = new UpdateOperations().updateDettachedInstance(connection, instance, classe, this.getContexts());
-
+                
                 // Saves the object in the repository
                 connection.commit();
             } catch (Exception e) {
