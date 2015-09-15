@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.codehaus.jettison.json.JSONObject;
 import org.openrdf.model.Literal;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
@@ -383,7 +384,7 @@ public class SPARQLQueryRunnerImpl implements QueryRunner {
      * @return a JSON as String
      */
     @Override
-    public String executeGraphQueryAsJSONLD(RepositoryConnection connection, String query, boolean graphAsJSONArray) throws RepositoryException, MalformedQueryException, QueryEvaluationException, RDFHandlerException {
+    public JSONObject executeGraphQueryAsJSONLD(RepositoryConnection connection, String query, boolean graphAsJSONArray) throws RepositoryException, MalformedQueryException, QueryEvaluationException, RDFHandlerException {
 
         GraphQueryToJSONLD jsonldWriter = new GraphQueryToJSONLD(connection);
         jsonldWriter.setAsJSONArray(graphAsJSONArray);
@@ -391,7 +392,7 @@ public class SPARQLQueryRunnerImpl implements QueryRunner {
         GraphQuery graphQuery = connection.prepareGraphQuery(QueryLanguage.SPARQL, query);
         // Performs the query
         graphQuery.evaluate(jsonldWriter);
-        return jsonldWriter.toJSONString();
+        return jsonldWriter.getResults();
     }
 
     /**

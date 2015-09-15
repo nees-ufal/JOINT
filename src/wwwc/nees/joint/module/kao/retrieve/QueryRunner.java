@@ -2,6 +2,7 @@ package wwwc.nees.joint.module.kao.retrieve;
 
 import java.util.Iterator;
 import java.util.List;
+import org.codehaus.jettison.json.JSONObject;
 import org.openrdf.model.URI;
 import org.openrdf.query.MalformedQueryException;
 import org.openrdf.query.QueryEvaluationException;
@@ -60,7 +61,7 @@ public interface QueryRunner {
      * default it's <code>true</code></b>.
      * @return a JSON as String
      */
-    public String executeGraphQueryAsJSONLD(RepositoryConnection connection, String query, boolean graphAsJSONArray) throws Exception;
+    public JSONObject executeGraphQueryAsJSONLD(RepositoryConnection connection, String query, boolean graphAsJSONArray) throws Exception;
 
     /**
      * Performs queries in the repository, returning a java.util.Iterator with

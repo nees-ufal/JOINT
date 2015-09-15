@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.codehaus.jettison.json.JSONObject;
 import org.openrdf.model.URI;
 import org.openrdf.model.impl.URIImpl;
 import org.openrdf.query.MalformedQueryException;
@@ -483,7 +484,7 @@ public abstract class AbstractKAO {
      * @param query the String with the query to be performed.
      * @return a JSON as String
      */
-    public String executeSPARQLgraphQueryAsJSONLDString(String query) {
+    public JSONObject executeSPARQLgraphQueryAsJSONLDString(String query) {
         return executeSPARQLgraphQueryAsJSONLDString(query, true);
     }
 
@@ -498,8 +499,8 @@ public abstract class AbstractKAO {
      * default it's <code>true</code></b>.
      * @return a JSON as String
      */
-    public String executeSPARQLgraphQueryAsJSONLDString(String query, boolean graphAsJSONArray) {
-        String results = null;
+    public JSONObject executeSPARQLgraphQueryAsJSONLDString(String query, boolean graphAsJSONArray) {
+        JSONObject results = null;
         try {
             //retrieves a connection with the repository
             connection = this.repository.getConnection();

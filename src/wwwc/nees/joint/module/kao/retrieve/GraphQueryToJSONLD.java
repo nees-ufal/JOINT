@@ -34,7 +34,7 @@ import org.openrdf.rio.RDFHandlerException;
 /**
  * @author williams
  */
-public class GraphQueryToJSONLD implements RDFHandler, JSONString {
+public class GraphQueryToJSONLD implements RDFHandler {
 
     // VARIABLES
     // -------------------------------------------------------------------------
@@ -74,9 +74,8 @@ public class GraphQueryToJSONLD implements RDFHandler, JSONString {
         this.asJSONArray = bool;
     }
 
-    @Override
-    public String toJSONString() {
-        return results.toString();
+    public JSONObject getResults() {
+        return results;
     }
 
     @Override
