@@ -737,7 +737,7 @@ public class RetrieveOperations {
      * @throws NullPointerException occurs when the containsTerm is null.
      */
     public List<Object> getDatasets(RepositoryConnection connection, String containsTerm)
-            throws RepositoryException, NullPointerException, Exception {
+            throws RepositoryException, Exception {
         StringBuilder query = new StringBuilder();
         query.append("select distinct ?str_graph ")
                 .append("where{graph ?g{?s ?p ?o} bind(str(?g) AS ?str_graph) ");

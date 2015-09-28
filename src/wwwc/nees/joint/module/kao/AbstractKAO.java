@@ -614,7 +614,7 @@ public abstract class AbstractKAO {
                 //performs the query
                 datasets = new RetrieveOperations().getDatasets(connection, containsTerm);
                 connection.commit();
-            } catch (RepositoryException | NullPointerException ex) {
+            } catch (RepositoryException ex) {
                 connection.rollback();
                 Logger.getLogger(AbstractKAO.class.getName()).log(Level.SEVERE, null, ex);
             } catch (Exception ex) {

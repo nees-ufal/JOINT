@@ -17,7 +17,7 @@ import org.openrdf.model.ValueFactory;
  * @author Olavo
  */
 public class DatatypeManager {
-
+    
     private final String STRING_CLASS = "java.lang.String";
     private final String STRING_NS = "http://www.w3.org/2001/XMLSchema#string";
     private final String BOOLEAN_CLASS = "java.lang.Boolean";
@@ -34,7 +34,9 @@ public class DatatypeManager {
     private final String OBJECT_NS = "java:Object";
     private final String DATETIME_CLASS = "javax.xml.datatype.XMLGregorianCalendar";
     private final String DATETIME_NS = "http://www.w3.org/2001/XMLSchema#dateTime";
-    private BidiMap<String, Class> namespacesClass;
+    private final String URI_CLASS = "java.net.URI";
+    private final String URI_NS = "http://www.w3.org/2001/XMLSchema#anyURI";
+    public BidiMap<String, Class> namespacesClass;
 
     // VARIABLES
     // -------------------------------------------------------------------------
@@ -65,9 +67,9 @@ public class DatatypeManager {
             namespacesClass.put(FLOAT_NS, Class.forName(FLOAT_CLASS));
             namespacesClass.put(DATETIME_NS, Class.forName(DATETIME_CLASS));
             namespacesClass.put(STRING_NS, Class.forName(STRING_CLASS));
-            // estava sobrescrevendo a chave FLOAT_NS
             namespacesClass.put(DECIMAL_NS, Class.forName(DECIMAL_CLASS));
             namespacesClass.put(DOUBLE_NS, Class.forName(DOUBLE_CLASS));
+            namespacesClass.put(URI_NS, Class.forName(URI_CLASS));
         } catch (ClassNotFoundException ex) {
             Logger.getLogger(DatatypeManager.class.getName()).log(Level.SEVERE, null, ex);
         }

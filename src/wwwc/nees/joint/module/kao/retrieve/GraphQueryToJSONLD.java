@@ -12,7 +12,6 @@ import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
-import org.codehaus.jettison.json.JSONString;
 import org.openrdf.model.Literal;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
@@ -30,6 +29,7 @@ import org.openrdf.repository.RepositoryException;
 import org.openrdf.repository.RepositoryResult;
 import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.RDFHandlerException;
+import wwwc.nees.joint.module.kao.DatatypeManager;
 
 /**
  * @author williams
@@ -84,6 +84,7 @@ public class GraphQueryToJSONLD implements RDFHandler {
 
     @Override
     public void endRDF() throws RDFHandlerException {
+        DatatypeManager datatypeMng = DatatypeManager.getInstance();
         try {
             try {
                 // Creates the query for retrieving the predicates and its range
@@ -101,8 +102,13 @@ public class GraphQueryToJSONLD implements RDFHandler {
                     BindingSet next = evaluate.next();
                     String predicateURI = next.getBinding("pred").getValue().stringValue();
                     String predicatePrefix = predicates.removeValue(predicateURI);
-                    handlePredicate(predicatePrefix, predicateURI, next.getBinding("range").getValue().stringValue());
+                    String range = next.getBinding("range").getValue().stringValue();
+                    handlePredicate(predicatePrefix, predicateURI, range);
+                    if (datatypeMng.namespacesClass.containsKey(range)) {
+                        triplesWithObjects.removeIf((value) -> (value[1].equals(predicatePrefix)));
+                    }
                 }
+
                 evaluate.close();
                 // Insert into the JSON the predicates that doesn't were found in the repository                
                 for (Map.Entry<String, String> pred : predicates.entrySet()) {
