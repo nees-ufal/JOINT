@@ -36,6 +36,13 @@ import wwwc.nees.joint.module.kao.DatatypeManager;
  */
 public class GraphQueryToJSONLD implements RDFHandler {
 
+    // CONSTANTS    
+    private final String CONTEXT = "@context";
+    private final String OBJECT = "@object";
+    private final String GRAPH = "@graph";
+    private final String ID = "@id";
+    private final String TYPE = "@type";
+
     // VARIABLES
     // -------------------------------------------------------------------------
     //Creates a variable to store the final results as JSONLD
@@ -43,12 +50,10 @@ public class GraphQueryToJSONLD implements RDFHandler {
     //Creates a variable to store the the JSON object @graph from JSONLD
     private final JSONObject results_graph;
     //
-    private final JSONObject results_removed;
     private final List<String[]> triplesWithObjects;
     private final Map<String, Boolean> areArray;
     private boolean asJSONArray = true;
     private BidiMap<String, String> predicates;
-    private List<String> exists = new ArrayList<>();
 
     private final RepositoryConnection connection;
     private final ValueFactory vf;
@@ -57,12 +62,11 @@ public class GraphQueryToJSONLD implements RDFHandler {
         predicates = new DualHashBidiMap<>();
         results = new JSONObject();
         try {
-            results.put("@context", new JSONObject());
+            results.put(CONTEXT, new JSONObject());
         } catch (JSONException ex) {
             Logger.getLogger(GraphQueryToJSONLD.class.getName()).log(Level.SEVERE, null, ex);
         }
         results_graph = new JSONObject();
-        results_removed = new JSONObject();
         triplesWithObjects = new ArrayList<>();
         areArray = new HashMap<>();
 
@@ -95,6 +99,7 @@ public class GraphQueryToJSONLD implements RDFHandler {
                     query.append("<").append(predicate).append("> ");
                 }
                 query.append("}?pred rdfs:range ?range.}");
+
                 TupleQuery prepareTupleQuery = connection.prepareTupleQuery(QueryLanguage.SPARQL, query.toString());
                 // Performs the query
                 TupleQueryResult evaluate = prepareTupleQuery.evaluate();
@@ -119,7 +124,7 @@ public class GraphQueryToJSONLD implements RDFHandler {
                 throw new RDFHandlerException(ex);
             }
 
-            // Handle all triples that can have objects instead of Literal.
+            // Handles all triples that can have objects instead of Literal.
             handleTriplesWithObject();
             /**
              * Now will be converted as JSON Array or maintained as JSON Object.
@@ -131,11 +136,11 @@ public class GraphQueryToJSONLD implements RDFHandler {
                 String subject = keys_aux.next();
                 JSONObject next = results_graph.getJSONObject(subject);
 
-                URI subj = vf.createURI(next.getString("@id"));
+                URI subj = vf.createURI(next.getString(ID));
                 RepositoryResult<Statement> statements = connection.getStatements(subj, RDF.TYPE, null, true);
                 while (statements.hasNext()) {
                     Statement statement = statements.next();
-                    results.getJSONObject("@context").accumulate("@type", statement.getObject().stringValue());
+                    results.getJSONObject(CONTEXT).accumulate(TYPE, statement.getObject().stringValue());
                 }
                 statements.close();
                 break;
@@ -148,9 +153,9 @@ public class GraphQueryToJSONLD implements RDFHandler {
                     JSONObject next = results_graph.getJSONObject(subject);
                     array.put(next);
                 }
-                results.put("@graph", array);
+                results.put(GRAPH, array);
             } else {
-                results.put("@graph", results_graph);
+                results.put(GRAPH, results_graph);
             }
         } catch (JSONException | RepositoryException ex) {
             Logger.getLogger(GraphQueryToJSONLD.class.getName()).log(Level.SEVERE, null, ex);
@@ -173,9 +178,9 @@ public class GraphQueryToJSONLD implements RDFHandler {
             }
         }
         JSONObject cont = new JSONObject()
-                .put("@id", predicateURI)
-                .put("@type", type);
-        results.getJSONObject("@context").put(predicatePrefix, cont);
+                .put(ID, predicateURI)
+                .put(TYPE, type);
+        results.getJSONObject(CONTEXT).put(predicatePrefix, cont);
     }
 
     /**
@@ -218,19 +223,6 @@ public class GraphQueryToJSONLD implements RDFHandler {
                     } else {
                         areArray.put(predicate_prefix, false);
                     }
-                    Object get = jsonObject.get(predicate_prefix);
-
-                    if (get instanceof JSONArray) {
-                        JSONArray a = (JSONArray) get;
-                        for (int i = 0; i < a.length(); i++) {
-                            if (a.getString(i).equals(object)) {
-                                exists.add(subject);
-                                break;
-                            }
-                        }
-                    } else if (get.toString().equals(object)) {
-                        exists.add(subject);
-                    }
                     jsonObject.accumulate(predicate_prefix, object);
                 } else if (areArray.containsKey(predicate_prefix)) {
                     jsonObject.append(predicate_prefix, object);
@@ -239,7 +231,7 @@ public class GraphQueryToJSONLD implements RDFHandler {
                 }
             } else {
                 jsonObject = new JSONObject();
-                jsonObject.put("@id", subject);
+                jsonObject.put(ID, subject);
                 if (areArray.containsKey(predicate_prefix)) {
                     jsonObject.append(predicate_prefix, object);
                 } else {
@@ -256,42 +248,32 @@ public class GraphQueryToJSONLD implements RDFHandler {
     public void handleComment(String string) throws RDFHandlerException {
     }
 
-    private JSONObject getJSONObject(String key) throws JSONException {
-        JSONObject result = null;
-        if (results_graph.has(key)) {
-            result = results_graph.getJSONObject(key);
-        } else if (results_removed.has(key)) {
-            result = results_removed.getJSONObject(key);
-        }
-        return result;
-    }
-
+    /**
+     * Handles all triples that can have objects instead of Literal.
+     */
     private void handleTriplesWithObject() throws JSONException {
-        for (String[] triple : triplesWithObjects) {
-            JSONObject object;
+        JSONObject jsonObject = new JSONObject();
+        //
+        for (int i = 0; i < triplesWithObjects.size(); i++) {
+            String[] triple = triplesWithObjects.get(i);
             if (results_graph.has(triple[2])) {
-                if (exists.contains(triple[2])) {
-                    object = results_graph.getJSONObject(triple[2]);
+                JSONObject obj = (JSONObject) results_graph.remove(triple[2]);
+                obj.remove(ID);
+                if (jsonObject.has(triple[1])) {
+                    JSONObject relatedObj = jsonObject.getJSONObject(triple[1]);
+
+                    relatedObj.put(triple[2], obj);
+
+                    //remove all triples that contains the same uri as object
+                    triplesWithObjects.removeIf((t) -> (t[2].equals(triple[2])));
+                    // 
+                    i--;
                 } else {
-                    object = (JSONObject) results_graph.remove(triple[2]);
-                    results_removed.put(triple[2], object);
+                    jsonObject.put(triple[1], new JSONObject().put(triple[2], obj));
                 }
-
-            } else if (results_removed.has(triple[2])) {
-                object = results_removed.getJSONObject(triple[2]);
-            } else {
-                continue;
-            }
-
-            JSONObject jsonObject = results_graph.getJSONObject(triple[0]);
-            if (areArray.containsKey(triple[1])) {
-                JSONArray jsonArray = jsonObject.getJSONArray(triple[1]);
-                jsonArray.remove(triple[2]);
-                jsonArray.put(object);
-            } else {
-                jsonObject.put(triple[1], object);
             }
         }
+        results.put(OBJECT, jsonObject);
     }
 
     private String handleSubjectTypeFromPredicate(String predicatePrefix) throws JSONException, RepositoryException {
@@ -304,8 +286,8 @@ public class GraphQueryToJSONLD implements RDFHandler {
                 if (!(s instanceof JSONArray)) {
                     if (s instanceof JSONObject) {
                         JSONObject s_aux = (JSONObject) s;
-                        if (s_aux.has("@id")) {
-                            id = s_aux.getString("@id");
+                        if (s_aux.has(ID)) {
+                            id = s_aux.getString(ID);
                         }
                     } else {
                         id = s.toString();
