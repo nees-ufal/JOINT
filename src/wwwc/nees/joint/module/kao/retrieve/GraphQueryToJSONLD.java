@@ -255,21 +255,23 @@ public class GraphQueryToJSONLD implements RDFHandler {
         JSONObject jsonObject = new JSONObject();
         //
         for (int i = 0; i < triplesWithObjects.size(); i++) {
+            //gets the triple that can have an object
             String[] triple = triplesWithObjects.get(i);
-            if (results_graph.has(triple[2])) {
-                JSONObject obj = (JSONObject) results_graph.remove(triple[2]);
+            //gets the object resource from triple
+            String triple_object = triple[2];
+            if (results_graph.has(triple_object)) {
+                //Gets and removes the instance of the graph results
+                JSONObject obj = (JSONObject) results_graph.remove(triple_object);
+                //removes the tag @id of the instance
                 obj.remove(ID);
-                if (jsonObject.has(triple[1])) {
-                    JSONObject relatedObj = jsonObject.getJSONObject(triple[1]);
+                if (!jsonObject.has(triple_object)) {
 
-                    relatedObj.put(triple[2], obj);
+                    jsonObject.put(triple_object, obj);
 
-                    //remove all triples that contains the same uri as object
-                    triplesWithObjects.removeIf((t) -> (t[2].equals(triple[2])));
-                    // 
+                    //removes all the triples that contains the same uri as object
+                    triplesWithObjects.removeIf((t) -> (t[2].equals(triple_object)));
+                    //decrease 1 in the counter to avoid error in the index from the list 
                     i--;
-                } else {
-                    jsonObject.put(triple[1], new JSONObject().put(triple[2], obj));
                 }
             }
         }
