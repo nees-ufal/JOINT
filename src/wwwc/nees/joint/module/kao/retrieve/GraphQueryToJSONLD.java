@@ -131,27 +131,18 @@ public class GraphQueryToJSONLD implements RDFHandler {
              * For this, each property from JSON OBJECT will be parsed as a JSON
              * OBJECT and will be added to JSON ARRAY called "results"
              */
-            Iterator<String> keys_aux = results_graph.keys();
-            while (keys_aux.hasNext()) {
-                String subject = keys_aux.next();
-                JSONObject next = results_graph.getJSONObject(subject);
-
-                URI subj = vf.createURI(next.getString(ID));
-                RepositoryResult<Statement> statements = connection.getStatements(subj, RDF.TYPE, null, true);
-                while (statements.hasNext()) {
-                    Statement statement = statements.next();
-                    results.getJSONObject(CONTEXT).accumulate(TYPE, statement.getObject().stringValue());
-                }
-                statements.close();
-                break;
-            }
             if (asJSONArray) {
+                int cont = 0;
                 Iterator<String> keys = results_graph.keys();
                 JSONArray array = new JSONArray();
                 while (keys.hasNext()) {
                     String subject = keys.next();
-                    JSONObject next = results_graph.getJSONObject(subject);
-                    array.put(next);
+                    if (cont == 0) {
+                        results.getJSONObject(CONTEXT).accumulate(TYPE, getTypeOfSubject(subject));
+                        cont++;
+                    }
+
+                    array.put(results_graph.getJSONObject(subject).put(ID, subject));
                 }
                 results.put(GRAPH, array);
             } else {
@@ -231,7 +222,7 @@ public class GraphQueryToJSONLD implements RDFHandler {
                 }
             } else {
                 jsonObject = new JSONObject();
-                jsonObject.put(ID, subject);
+//                jsonObject.put(ID, subject);
                 if (areArray.containsKey(predicate_prefix)) {
                     jsonObject.append(predicate_prefix, object);
                 } else {
@@ -309,6 +300,18 @@ public class GraphQueryToJSONLD implements RDFHandler {
         } catch (IllegalArgumentException | NullPointerException i) {
         }
         return null;
+    }
+
+    public String getTypeOfSubject(String subject) throws RepositoryException {
+        RepositoryResult<Statement> statements = connection.getStatements(vf.createURI(subject), RDF.TYPE, null, true);
+        String type = null;
+        while (statements.hasNext()) {
+            Statement statement = statements.next();
+            type = statement.getObject().stringValue();
+            break;
+        }
+        statements.close();
+        return type;
     }
 
     /**
