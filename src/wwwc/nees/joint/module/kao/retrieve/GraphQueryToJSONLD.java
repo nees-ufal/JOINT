@@ -5,10 +5,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.apache.commons.collections4.BidiMap;
-import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -17,6 +16,7 @@ import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
 import org.openrdf.model.Value;
 import org.openrdf.model.ValueFactory;
+import org.openrdf.model.impl.URIImpl;
 import org.openrdf.model.vocabulary.RDF;
 import org.openrdf.query.BindingSet;
 import org.openrdf.query.MalformedQueryException;
@@ -48,25 +48,27 @@ public class GraphQueryToJSONLD implements RDFHandler {
     //Creates a variable to store the final results as JSONLD
     private final JSONObject results;
     //Creates a variable to store the the JSON object @graph from JSONLD
-    private final JSONObject results_graph;
+    private JSONObject results_context;
+    private JSONObject results_graph;
     //
     private final List<String[]> triplesWithObjects;
     private final Map<String, Boolean> areArray;
     private boolean asJSONArray = true;
-    private BidiMap<String, String> predicates;
+    // private BidiMap<String, String> predicates;
 
     private final RepositoryConnection connection;
     private final ValueFactory vf;
 
     public GraphQueryToJSONLD(RepositoryConnection connection) {
-        predicates = new DualHashBidiMap<>();
+        //   predicates = new DualHashBidiMap<>();
         results = new JSONObject();
         try {
             results.put(CONTEXT, new JSONObject());
+            results.put(GRAPH, new JSONObject());
         } catch (JSONException ex) {
             Logger.getLogger(GraphQueryToJSONLD.class.getName()).log(Level.SEVERE, null, ex);
         }
-        results_graph = new JSONObject();
+
         triplesWithObjects = new ArrayList<>();
         areArray = new HashMap<>();
 
@@ -84,6 +86,12 @@ public class GraphQueryToJSONLD implements RDFHandler {
 
     @Override
     public void startRDF() throws RDFHandlerException {
+        try {
+            results_context = results.getJSONObject(CONTEXT);
+            results_graph = results.getJSONObject(GRAPH);
+        } catch (JSONException ex) {
+            Logger.getLogger(GraphQueryToJSONLD.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     @Override
@@ -95,8 +103,11 @@ public class GraphQueryToJSONLD implements RDFHandler {
                 StringBuilder query = new StringBuilder();
                 query.append("select ?pred ?range ")
                         .append("where{values ?pred{");
-                for (String predicate : predicates.values()) {
-                    query.append("<").append(predicate).append("> ");
+                JSONArray predicates_names = results_context.names();
+                for (int i = 0; i < predicates_names.length(); i++) {
+                    String predicate_prefix = predicates_names.getString(i);
+                    String predicate_uri = results_context.getJSONObject(predicate_prefix).getString(ID);
+                    query.append("<").append(predicate_uri).append("> ");
                 }
                 query.append("}?pred rdfs:range ?range.}");
 
@@ -106,23 +117,21 @@ public class GraphQueryToJSONLD implements RDFHandler {
                 while (evaluate.hasNext()) {
                     BindingSet next = evaluate.next();
                     String predicateURI = next.getBinding("pred").getValue().stringValue();
-                    String predicatePrefix = predicates.removeValue(predicateURI);
+                    URI predicate = new URIImpl(predicateURI);
                     String range = next.getBinding("range").getValue().stringValue();
-                    handlePredicate(predicatePrefix, predicateURI, range);
+                    addTypeOfPredicate(predicate.getLocalName(), range);
                     if (datatypeMng.namespacesClass.containsKey(range)) {
-                        triplesWithObjects.removeIf((value) -> (value[1].equals(predicatePrefix)));
+                        triplesWithObjects.removeIf((value) -> (value[1].equals(predicate.getLocalName())));
                     }
                 }
 
                 evaluate.close();
-                // Insert into the JSON the predicates that doesn't were found in the repository                
-                for (Map.Entry<String, String> pred : predicates.entrySet()) {
-                    handlePredicate(pred.getKey(), pred.getValue(), null);
-                }
-                predicates.clear();
+
             } catch (RepositoryException | MalformedQueryException | QueryEvaluationException ex) {
                 throw new RDFHandlerException(ex);
             }
+
+            convertObjectToArray();
 
             // Handles all triples that can have objects instead of Literal.
             handleTriplesWithObject();
@@ -131,22 +140,20 @@ public class GraphQueryToJSONLD implements RDFHandler {
              * For this, each property from JSON OBJECT will be parsed as a JSON
              * OBJECT and will be added to JSON ARRAY called "results"
              */
+            JSONArray names = results_graph.names();
+            for (int i = 0; i < names.length(); i++) {
+                String subject = names.getString(i);
+                results_graph.getJSONObject(subject);
+                results_context.put(TYPE, getTypeOfSubject(subject));
+                break;
+            }
             if (asJSONArray) {
-                int cont = 0;
-                Iterator<String> keys = results_graph.keys();
                 JSONArray array = new JSONArray();
-                while (keys.hasNext()) {
-                    String subject = keys.next();
-                    if (cont == 0) {
-                        results.getJSONObject(CONTEXT).accumulate(TYPE, getTypeOfSubject(subject));
-                        cont++;
-                    }
-
+                for (int i = 0; i < names.length(); i++) {
+                    String subject = names.getString(i);
                     array.put(results_graph.getJSONObject(subject).put(ID, subject));
                 }
                 results.put(GRAPH, array);
-            } else {
-                results.put(GRAPH, results_graph);
             }
         } catch (JSONException | RepositoryException ex) {
             Logger.getLogger(GraphQueryToJSONLD.class.getName()).log(Level.SEVERE, null, ex);
@@ -155,47 +162,29 @@ public class GraphQueryToJSONLD implements RDFHandler {
 
     @Override
     public void handleNamespace(String prefix, String uri) throws RDFHandlerException {
-
-    }
-
-    /**
-     * Add a JSON Object with the keywords <b>@id</b> and <b>@type</b>
-     */
-    private void handlePredicate(String predicatePrefix, String predicateURI, String type) throws JSONException, RepositoryException {
-        if (type == null) {
-            type = handleSubjectTypeFromPredicate(predicatePrefix);
-            if (type == null) {
-                return;
+        if (!results_context.has(prefix)) {
+            try {
+                results_context.put(prefix, new JSONObject().put(ID, uri));
+            } catch (JSONException ex) {
+                Logger.getLogger(GraphQueryToJSONLD.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-        JSONObject cont = new JSONObject()
-                .put(ID, predicateURI)
-                .put(TYPE, type);
-        results.getJSONObject(CONTEXT).put(predicatePrefix, cont);
     }
 
-    /**
-     * Handle the prefix and the URI from predicate to avoid duplicates
-     */
-    private String handlePredicatePrefix(String predicatePrefix, String predicateURI) {
-        if (predicates.containsKey(predicatePrefix)) {
-            String get = predicates.get(predicatePrefix);
-            if (!predicateURI.equals(get)) {
-                predicatePrefix = predicatePrefix.concat(String.valueOf(predicates.size()));
-            }
-        }
-        predicates.put(predicatePrefix, predicateURI);
-        return predicatePrefix;
+    private void addTypeOfPredicate(String predicatePrefix, String type) throws JSONException, RepositoryException {
+        results_context.getJSONObject(predicatePrefix).put(TYPE, type);
     }
 
     @Override
     public void handleStatement(Statement stt) throws RDFHandlerException {
         try {
             String subject = stt.getSubject().stringValue();
-            URI predicate = stt.getPredicate();
+            String predicate_prefix = stt.getPredicate().getLocalName();
+            String predicate_uri = stt.getPredicate().stringValue();
             Value value = stt.getObject();
             String object = value.stringValue();
-            String predicate_prefix = handlePredicatePrefix(predicate.getLocalName(), predicate.stringValue());
+
+            handleNamespace(predicate_prefix, predicate_uri);
 
             //Validate the URI and it add to list of triples which possible represent an object            
             if (!(value instanceof Literal)) {
@@ -203,31 +192,15 @@ public class GraphQueryToJSONLD implements RDFHandler {
             }
 
             JSONObject jsonObject;
+
             if (results_graph.has(subject)) {
                 jsonObject = results_graph.getJSONObject(subject);
                 if (jsonObject.has(predicate_prefix)) {
-                    if (areArray.containsKey(predicate_prefix)) {
-                        Boolean isArray = areArray.get(predicate_prefix);
-                        if (false == isArray) {
-                            converterObjectToArray(predicate_prefix);
-                        }
-                    } else {
-                        areArray.put(predicate_prefix, false);
-                    }
-                    jsonObject.accumulate(predicate_prefix, object);
-                } else if (areArray.containsKey(predicate_prefix)) {
-                    jsonObject.append(predicate_prefix, object);
-                } else {
-                    jsonObject.put(predicate_prefix, object);
+                    areArray.putIfAbsent(predicate_prefix, false);
                 }
+                jsonObject.accumulate(predicate_prefix, object);
             } else {
-                jsonObject = new JSONObject();
-//                jsonObject.put(ID, subject);
-                if (areArray.containsKey(predicate_prefix)) {
-                    jsonObject.append(predicate_prefix, object);
-                } else {
-                    jsonObject.put(predicate_prefix, object);
-                }
+                jsonObject = new JSONObject().put(predicate_prefix, object);
                 results_graph.put(subject, jsonObject);
             }
         } catch (JSONException ex) {
@@ -321,17 +294,20 @@ public class GraphQueryToJSONLD implements RDFHandler {
      * @param predicate
      * @throws org.codehaus.jettison.json.JSONException
      */
-    private void converterObjectToArray(String predicate) throws JSONException {
-        Iterator<String> keys = results_graph.keys();
+    private void convertObjectToArray() throws JSONException {
+        Iterator<String> keys = this.results_graph.keys();
+        Set<String> areArrayKeys = areArray.keySet();
         while (keys.hasNext()) {
-            JSONObject jsonObject_aux = results_graph.getJSONObject(keys.next());
-            if (jsonObject_aux.has(predicate)) {
-                Object res = jsonObject_aux.get(predicate);
-                if (!(res instanceof JSONArray)) {
-                    jsonObject_aux.put(predicate, new JSONArray().put(res));
+            JSONObject jsonObject = results_graph.getJSONObject(keys.next());
+
+            for (String predicate : areArrayKeys) {
+                if (jsonObject.has(predicate)) {
+                    Object ob = jsonObject.get(predicate);
+                    if (!(ob instanceof JSONArray)) {
+                        jsonObject.put(predicate, new JSONArray().put(ob));
+                    }
                 }
             }
         }
-        areArray.put(predicate, true);
     }
 }
