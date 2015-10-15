@@ -98,36 +98,36 @@ public class GraphQueryToJSONLD implements RDFHandler {
     public void endRDF() throws RDFHandlerException {
         DatatypeManager datatypeMng = DatatypeManager.getInstance();
         try {
-            try {
+            Iterator<String> predicates_names = results_context.keys();
+            if (predicates_names.hasNext()) {
                 // Creates the query for retrieving the predicates and its range
                 StringBuilder query = new StringBuilder();
                 query.append("select ?pred ?range ")
                         .append("where{values ?pred{");
-                JSONArray predicates_names = results_context.names();
-                for (int i = 0; i < predicates_names.length(); i++) {
-                    String predicate_prefix = predicates_names.getString(i);
+                while (predicates_names.hasNext()) {
+                    String predicate_prefix = predicates_names.next();
                     String predicate_uri = results_context.getJSONObject(predicate_prefix).getString(ID);
                     query.append("<").append(predicate_uri).append("> ");
                 }
                 query.append("}?pred rdfs:range ?range.}");
-
-                TupleQuery prepareTupleQuery = connection.prepareTupleQuery(QueryLanguage.SPARQL, query.toString());
-                // Performs the query
-                TupleQueryResult evaluate = prepareTupleQuery.evaluate();
-                while (evaluate.hasNext()) {
-                    BindingSet next = evaluate.next();
-                    String predicateURI = next.getBinding("pred").getValue().stringValue();
-                    URI predicate = new URIImpl(predicateURI);
-                    String range = next.getBinding("range").getValue().stringValue();
-                    addTypeOfPredicate(predicate.getLocalName(), range);
-                    if (datatypeMng.namespacesClass.containsKey(range)) {
-                        triplesWithObjects.removeIf((value) -> (value[1].equals(predicate.getLocalName())));
+                try {
+                    TupleQuery prepareTupleQuery = connection.prepareTupleQuery(QueryLanguage.SPARQL, query.toString());
+                    // Performs the query
+                    TupleQueryResult evaluate = prepareTupleQuery.evaluate();
+                    while (evaluate.hasNext()) {
+                        BindingSet next = evaluate.next();
+                        String predicateURI = next.getBinding("pred").getValue().stringValue();
+                        URI predicate = new URIImpl(predicateURI);
+                        String range = next.getBinding("range").getValue().stringValue();
+                        addTypeOfPredicate(predicate.getLocalName(), range);
+                        if (datatypeMng.namespacesClass.containsKey(range)) {
+                            triplesWithObjects.removeIf((value) -> (value[1].equals(predicate.getLocalName())));
+                        }
                     }
+                    evaluate.close();
+                } catch (RepositoryException | MalformedQueryException | QueryEvaluationException ex) {
+                    throw new RDFHandlerException(ex);
                 }
-                evaluate.close();
-
-            } catch (RepositoryException | MalformedQueryException | QueryEvaluationException ex) {
-                throw new RDFHandlerException(ex);
             }
 
             // Handles all triples that can have objects instead of Literal.
@@ -137,30 +137,34 @@ public class GraphQueryToJSONLD implements RDFHandler {
              * For this, each property from JSON OBJECT will be parsed as a JSON
              * OBJECT and will be added to JSON ARRAY called "results"
              */
+            JSONArray array = new JSONArray();
             JSONArray names = results_graph.names();
-            for (int i = 0; i < names.length(); i++) {
-                String subject = names.getString(i);
-                results_graph.getJSONObject(subject);
-                results_context.put(TYPE, getTypeOfSubject(subject));
-                break;
-            }
-            if (asJSONArray) {
-                JSONArray array = new JSONArray();
+
+            if (names != null) {
                 for (int i = 0; i < names.length(); i++) {
                     String subject = names.getString(i);
-                    JSONObject jsonObject = results_graph.getJSONObject(subject);
-                    //verify if some keys from JSONObject are array
-                    convertObjectToArray_Object(jsonObject);
-
-                    array.put(jsonObject.put(ID, subject));
+                    results_graph.getJSONObject(subject);
+                    results_context.put(TYPE, getTypeOfSubject(subject));
+                    break;
                 }
-                results.put(GRAPH, array);
-                //
-                convertObjectToArray_Objects(results_object);
-            } else {
-                convertObjectToArray_Objects(results_object);
-                convertObjectToArray_Objects(results_graph);
+                if (asJSONArray) {
+                    for (int i = 0; i < names.length(); i++) {
+                        String subject = names.getString(i);
+                        JSONObject jsonObject = results_graph.getJSONObject(subject);
+                        //verify if some keys from JSONObject are array
+                        convertObjectToArray_Object(jsonObject);
+
+                        array.put(jsonObject.put(ID, subject));
+                    }
+                    //
+                    convertObjectToArray_Objects(results_object);
+                } else {
+                    convertObjectToArray_Objects(results_object);
+                    convertObjectToArray_Objects(results_graph);
+                    return;
+                }
             }
+            results.put(GRAPH, array);
         } catch (JSONException | RepositoryException ex) {
             Logger.getLogger(GraphQueryToJSONLD.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -189,7 +193,6 @@ public class GraphQueryToJSONLD implements RDFHandler {
             String predicate_uri = stt.getPredicate().stringValue();
             Value value = stt.getObject();
             String object = value.stringValue();
-
             handleNamespace(predicate_prefix, predicate_uri);
 
             //Validate the URI and it add to list of triples which possible represent an object            
@@ -334,6 +337,20 @@ public class GraphQueryToJSONLD implements RDFHandler {
                     }
                 }
             }
+        }
+    }
+
+    public static void main(String[] args) {
+
+        try {
+            JSONObject o = new JSONObject().put("cont", new JSONObject());
+            Iterator<String> names = o.getJSONObject("cont").keys();
+            System.out.println(names.hasNext());
+            if (names != null) {
+                System.out.println(names);
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
     }
 }
