@@ -53,7 +53,7 @@ public class GraphQueryToJSONLD implements RDFHandler {
     private final List<String> areArray;
     private boolean asJSONArray = true;
     // private BidiMap<String, String> predicates;
-
+    long tempoInicial;
     private final RepositoryConnection connection;
     private final ValueFactory vf;
 
@@ -167,7 +167,7 @@ public class GraphQueryToJSONLD implements RDFHandler {
             results.put(GRAPH, array);
         } catch (JSONException | RepositoryException ex) {
             Logger.getLogger(GraphQueryToJSONLD.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        }    
     }
 
     @Override
