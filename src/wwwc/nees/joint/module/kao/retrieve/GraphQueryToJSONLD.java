@@ -141,12 +141,6 @@ public class GraphQueryToJSONLD implements RDFHandler {
             JSONArray names = results_graph.names();
 
             if (names != null) {
-                for (int i = 0; i < names.length(); i++) {
-                    String subject = names.getString(i);
-                    results_graph.getJSONObject(subject);
-                    results_context.put(TYPE, getTypeOfSubject(subject));
-                    break;
-                }
                 if (asJSONArray) {
                     for (int i = 0; i < names.length(); i++) {
                         String subject = names.getString(i);
@@ -165,9 +159,9 @@ public class GraphQueryToJSONLD implements RDFHandler {
                 }
             }
             results.put(GRAPH, array);
-        } catch (JSONException | RepositoryException ex) {
+        } catch (JSONException ex) {
             Logger.getLogger(GraphQueryToJSONLD.class.getName()).log(Level.SEVERE, null, ex);
-        }    
+        }
     }
 
     @Override
@@ -246,39 +240,6 @@ public class GraphQueryToJSONLD implements RDFHandler {
         }
     }
 
-    private String handleSubjectTypeFromPredicate(String predicatePrefix) throws JSONException, RepositoryException {
-        Iterator<String> keys = results_graph.keys();
-        String id = null;
-        while (keys.hasNext()) {
-            String key = keys.next();
-            if (results_graph.getJSONObject(key).has(predicatePrefix)) {
-                Object s = results_graph.getJSONObject(key).get(predicatePrefix);
-                if (!(s instanceof JSONArray)) {
-                    if (s instanceof JSONObject) {
-                        JSONObject s_aux = (JSONObject) s;
-                        if (s_aux.has(ID)) {
-                            id = s_aux.getString(ID);
-                        }
-                    } else {
-                        id = s.toString();
-                    }
-                    break;
-                }
-            }
-        }
-        try {
-            URI subj = vf.createURI(id);
-            RepositoryResult<Statement> statements = connection.getStatements(subj, RDF.TYPE, null, true);
-            while (statements.hasNext()) {
-                Statement statement = statements.next();
-                statements.close();
-                return statement.getObject().stringValue();
-            }
-        } catch (IllegalArgumentException | NullPointerException i) {
-        }
-        return null;
-    }
-
     public String getTypeOfSubject(String subject) throws RepositoryException {
         RepositoryResult<Statement> statements = connection.getStatements(vf.createURI(subject), RDF.TYPE, null, true);
         String type = null;
@@ -298,22 +259,6 @@ public class GraphQueryToJSONLD implements RDFHandler {
      * @param predicate
      * @throws org.codehaus.jettison.json.JSONException
      */
-    private void convertObjectToArray() throws JSONException {
-        Iterator<String> keys = this.results_graph.keys();
-        while (keys.hasNext()) {
-            JSONObject jsonObject = results_graph.getJSONObject(keys.next());
-
-            for (String predicate : areArray) {
-                if (jsonObject.has(predicate)) {
-                    Object ob = jsonObject.get(predicate);
-                    if (!(ob instanceof JSONArray)) {
-                        jsonObject.put(predicate, new JSONArray().put(ob));
-                    }
-                }
-            }
-        }
-    }
-
     private void convertObjectToArray_Object(JSONObject object) throws JSONException {
         for (String predicate : areArray) {
             if (object.has(predicate)) {
@@ -337,20 +282,6 @@ public class GraphQueryToJSONLD implements RDFHandler {
                     }
                 }
             }
-        }
-    }
-
-    public static void main(String[] args) {
-
-        try {
-            JSONObject o = new JSONObject().put("cont", new JSONObject());
-            Iterator<String> names = o.getJSONObject("cont").keys();
-            System.out.println(names.hasNext());
-            if (names != null) {
-                System.out.println(names);
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
         }
     }
 }
