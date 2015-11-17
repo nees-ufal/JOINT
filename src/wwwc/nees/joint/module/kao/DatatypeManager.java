@@ -17,7 +17,7 @@ import org.openrdf.model.ValueFactory;
  * @author Olavo
  */
 public class DatatypeManager {
-    
+
     private final String STRING_CLASS = "java.lang.String";
     private final String STRING_NS = "http://www.w3.org/2001/XMLSchema#string";
     private final String BOOLEAN_CLASS = "java.lang.Boolean";
@@ -192,6 +192,7 @@ public class DatatypeManager {
 
     public Object convertLiteralToDataype(Literal lit, String parameterClassName) throws Exception {
         URI dType = lit.getDatatype();
+        Object convertedData = null;
         String datatype;
         if (dType == null) {
             String className = namespacesClass.getKey(Class.forName(parameterClassName));
@@ -216,7 +217,11 @@ public class DatatypeManager {
         } else {
             throw new Exception("Unknown datatype: " + datatype);
         }
-        return convertDatatype(lit.stringValue(), type.getName());
+
+        convertedData = (parameterClassName.equalsIgnoreCase(BOOLEAN_CLASS)) ? 
+                convertDatatype(String.valueOf(lit.booleanValue()), Class.forName(BOOLEAN_CLASS).getName()) : //if boolean
+                convertDatatype(lit.stringValue(), type.getName()); // not boolean
+        return convertedData;
     }
 
     public List<Object> convertCollectionOfLiteralToDataypes(List<Literal> literals) throws Exception {

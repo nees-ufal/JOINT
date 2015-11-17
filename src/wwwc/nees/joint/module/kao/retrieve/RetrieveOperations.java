@@ -24,11 +24,12 @@ import org.openrdf.repository.RepositoryResult;
 import wwwc.nees.joint.model.JOINTResource;
 import wwwc.nees.joint.module.kao.ConceptsPackageInfo;
 import wwwc.nees.joint.module.kao.DatatypeManager;
+import wwwc.nees.joint.module.kao.Operation;
 
 /**
  * @author Olavo
  */
-public class RetrieveOperations {
+public class RetrieveOperations extends Operation{
 
     private final DatatypeManager datatypeManager;
     private final Map<String, String> packages;

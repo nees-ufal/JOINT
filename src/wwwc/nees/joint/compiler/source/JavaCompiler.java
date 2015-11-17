@@ -44,6 +44,7 @@ import java.util.List;
 import wwwc.nees.joint.compiler.exceptions.ObjectCompileException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import wwwc.nees.joint.api.JointApiBuilder;
 
 /**
  * Java Compiler that can detects the present of a JDK.
@@ -54,7 +55,7 @@ import org.slf4j.LoggerFactory;
 public class JavaCompiler {
 
 	final Logger logger = LoggerFactory.getLogger(JavaCompiler.class);
-
+        final JointApiBuilder apiBuilder = new JointApiBuilder();
 	private String version = "5";
 	private boolean useTools = true;
 
@@ -68,6 +69,10 @@ public class JavaCompiler {
 
 	public void compile(Iterable<String> content, File dir, List<File> classpath)
 			throws ObjectCompileException, IOException, InterruptedException {
+            
+            apiBuilder.setDir(dir);
+            apiBuilder.build();
+            
 		List<File> source = new ArrayList<File>();
 		for (String name : content) {
 			String filename = name.replace('.', File.separatorChar);
