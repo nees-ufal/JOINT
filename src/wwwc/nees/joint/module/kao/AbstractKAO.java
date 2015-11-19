@@ -18,6 +18,7 @@ import org.openrdf.query.UpdateExecutionException;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
+import wwwc.nees.joint.module.kao.retrieve.Feature;
 
 /**
  * Abstract class KAO, for operations in the persistence with SESAME and Alibaba
@@ -344,7 +345,7 @@ public abstract class AbstractKAO {
                 connection.begin();
 
                 ob = new UpdateOperations().updateDettachedInstance(connection, instance, classe, this.getContexts());
-                
+
                 // Saves the object in the repository
                 connection.commit();
             } catch (Exception e) {
@@ -484,9 +485,9 @@ public abstract class AbstractKAO {
      * @param query the String with the query to be performed.
      * @return a JSON as String
      */
-    public JSONObject executeSPARQLgraphQueryAsJSONLDString(String query) {
-        return executeSPARQLgraphQueryAsJSONLDString(query, true);
-    }
+//    public JSONObject executeSPARQLgraphQueryAsJSONLDString(String query) {
+//        return executeSPARQLgraphQueryAsJSONLDString(query);
+//    }
 
     /**
      * Performs query in the repository, returning the results in an adapted
@@ -499,7 +500,7 @@ public abstract class AbstractKAO {
      * default it's <code>true</code></b>.
      * @return a JSON as String
      */
-    public JSONObject executeSPARQLgraphQueryAsJSONLDString(String query, boolean graphAsJSONArray) {
+    public JSONObject executeSPARQLgraphQueryAsJSONLDString(String query, Feature... features) {
         JSONObject results = null;
         try {
             //retrieves a connection with the repository
@@ -508,7 +509,7 @@ public abstract class AbstractKAO {
                 //starts a transaction
                 connection.begin();
                 //performs the query
-                results = this.queryRunner.executeGraphQueryAsJSONLD(connection, query, graphAsJSONArray);
+                results = this.queryRunner.executeGraphQueryAsJSONLD(connection, query, features);
                 connection.commit();
             } catch (Exception ex) {
                 connection.rollback();

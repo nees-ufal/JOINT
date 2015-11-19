@@ -1,6 +1,7 @@
 package wwwc.nees.joint.module.kao.retrieve;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
@@ -51,32 +52,22 @@ public class GraphQueryToJSONLD implements RDFHandler {
     //
     private final List<String[]> triplesWithObjects;
     private final List<String> areArray;
-    private boolean asJSONArray = true;
-    // private BidiMap<String, String> predicates;
-    long tempoInicial;
+    private final List<Feature> features;
     private final RepositoryConnection connection;
     private final ValueFactory vf;
 
-    public GraphQueryToJSONLD(RepositoryConnection connection) {
-        //   predicates = new DualHashBidiMap<>();
-        results = new JSONObject();
-        try {
-            results.put(CONTEXT, new JSONObject());
-            results.put(GRAPH, new JSONObject());
-            results.put(OBJECT, new JSONObject());
-        } catch (JSONException ex) {
-            Logger.getLogger(GraphQueryToJSONLD.class.getName()).log(Level.SEVERE, null, ex);
-        }
+    public GraphQueryToJSONLD(RepositoryConnection connection, Feature... features) throws JSONException {
+        results = new JSONObject()
+                .put(CONTEXT, new JSONObject())
+                .put(GRAPH, new JSONObject())
+                .put(OBJECT, new JSONObject());
 
+        this.features = Arrays.asList(features);
         triplesWithObjects = new ArrayList<>();
         areArray = new ArrayList<>();
 
         this.connection = connection;
         this.vf = connection.getValueFactory();
-    }
-
-    public void setAsJSONArray(boolean bool) {
-        this.asJSONArray = bool;
     }
 
     public JSONObject getResults() {
@@ -130,35 +121,34 @@ public class GraphQueryToJSONLD implements RDFHandler {
                 }
             }
 
-            // Handles all triples that can have objects instead of Literal.
-            handleTriplesWithObject();
+            if (!features.contains(Feature.NOT_HANDLE_TRIPLES_WITH_OBJECTS)) {
+                // Handles all triples that can have objects instead of Literal.
+                handleTriplesWithObject();
+            }
             /**
              * Now will be converted as JSON Array or maintained as JSON Object.
              * For this, each property from JSON OBJECT will be parsed as a JSON
              * OBJECT and will be added to JSON ARRAY called "results"
              */
-            JSONArray array = new JSONArray();
-            JSONArray names = results_graph.names();
+            if (features.contains(Feature.PRINT_GRAPH_AS_JSONARRAY)) {
+                JSONArray array = new JSONArray();
+                Iterator<String> keys = results_graph.keys();
+                while (keys.hasNext()) {
+                    String subject = keys.next();
+                    JSONObject jsonObject = results_graph.getJSONObject(subject);
+                    //verify if some keys from JSONObject are array
+                    convertObjectToArray_Object(jsonObject);
 
-            if (names != null) {
-                if (asJSONArray) {
-                    for (int i = 0; i < names.length(); i++) {
-                        String subject = names.getString(i);
-                        JSONObject jsonObject = results_graph.getJSONObject(subject);
-                        //verify if some keys from JSONObject are array
-                        convertObjectToArray_Object(jsonObject);
+                    array.put(jsonObject.put(ID, subject));
 
-                        array.put(jsonObject.put(ID, subject));
-                    }
-                    //
-                    convertObjectToArray_Objects(results_object);
-                } else {
-                    convertObjectToArray_Objects(results_object);
-                    convertObjectToArray_Objects(results_graph);
-                    return;
                 }
+                convertObjectToArray_Objects(results_object);
+                results.put(GRAPH, array);
+            } else {
+                convertObjectToArray_Objects(results_object);
+                convertObjectToArray_Objects(results_graph);
             }
-            results.put(GRAPH, array);
+
         } catch (JSONException ex) {
             Logger.getLogger(GraphQueryToJSONLD.class.getName()).log(Level.SEVERE, null, ex);
         }

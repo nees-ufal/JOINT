@@ -2,6 +2,7 @@ package wwwc.nees.joint.module.kao.retrieve;
 
 import java.util.Iterator;
 import java.util.List;
+import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.openrdf.model.URI;
 import org.openrdf.query.MalformedQueryException;
@@ -9,6 +10,7 @@ import org.openrdf.query.QueryEvaluationException;
 import org.openrdf.query.TupleQueryResultHandlerException;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
+import org.openrdf.rio.RDFHandlerException;
 
 /**
  * Interface for query operations in the repository
@@ -61,7 +63,7 @@ public interface QueryRunner {
      * default it's <code>true</code></b>.
      * @return a JSON as String
      */
-    public JSONObject executeGraphQueryAsJSONLD(RepositoryConnection connection, String query, boolean graphAsJSONArray) throws Exception;
+    public JSONObject executeGraphQueryAsJSONLD(RepositoryConnection connection, String query, Feature... features) throws RepositoryException, MalformedQueryException, QueryEvaluationException, RDFHandlerException, JSONException;
 
     /**
      * Performs queries in the repository, returning a java.util.Iterator with

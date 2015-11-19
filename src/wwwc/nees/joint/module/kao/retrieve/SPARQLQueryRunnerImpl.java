@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.openrdf.model.Literal;
 import org.openrdf.model.Statement;
@@ -377,6 +378,7 @@ public class SPARQLQueryRunnerImpl implements QueryRunner {
      *
      * @param connection receives an object of connection with the repository
      * @param query the String with the query to be performed.
+     * @param features
      * @param graphAsJSONArray defines if the <b><code>@graph</code> key</b> is
      * a JSON Array. If value is true, then is an array, else, is a JSON Object
      * where the <b><code>@id</code> key</b> are the keys of the objects. <b>By
@@ -384,10 +386,8 @@ public class SPARQLQueryRunnerImpl implements QueryRunner {
      * @return a JSON as String
      */
     @Override
-    public JSONObject executeGraphQueryAsJSONLD(RepositoryConnection connection, String query, boolean graphAsJSONArray) throws RepositoryException, MalformedQueryException, QueryEvaluationException, RDFHandlerException {
-
-        GraphQueryToJSONLD jsonldWriter = new GraphQueryToJSONLD(connection);
-        jsonldWriter.setAsJSONArray(graphAsJSONArray);
+    public JSONObject executeGraphQueryAsJSONLD(RepositoryConnection connection, String query, Feature... features) throws RepositoryException, MalformedQueryException, QueryEvaluationException, RDFHandlerException, JSONException {
+        GraphQueryToJSONLD jsonldWriter = new GraphQueryToJSONLD(connection, features);
         // Creates the query based on the parameter
         GraphQuery graphQuery = connection.prepareGraphQuery(QueryLanguage.SPARQL, query);
         // Performs the query
