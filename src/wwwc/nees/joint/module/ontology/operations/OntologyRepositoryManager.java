@@ -233,23 +233,8 @@ public class OntologyRepositoryManager {
                 //Begins a transaction
                 this.repoConnection.begin();
 
-//                create URI from ontology's URI
-//                URI uri = this.factory.createURI(ontologyURI.toString());
-                StringBuilder builder = new StringBuilder();
-                builder.append("CONSTRUCT \n");
-                builder.append("FROM <");
-                builder.append(ontologyURI);
-                builder.append("> \n");
-                builder.append("WHERE {?x ?y ?z}");
-
-                GraphQuery prepareGraphQuery = this.repoConnection.prepareGraphQuery(QueryLanguage.SPARQL, builder.toString());
-                GraphQueryResult evaluate = prepareGraphQuery.evaluate();
-
-                //create URI from ontology's URI
-                URI uri = this.factory.createURI(ontologyURI);
-
                 // Removes the entire ontology of the repository
-                this.repoConnection.remove(evaluate);
+                this.repoConnection.remove((Resource) null, null, null, factory.createURI(ontologyURI));
 
                 //commit the changes made in the repository
                 this.repoConnection.commit();
