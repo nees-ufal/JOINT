@@ -21,11 +21,11 @@ public class RepositoryFacade {
     // VARIABLES
     // -------------------------------------------------------------------------
     // Run rules in the repository
-    private RuleEngine ruleEngine;
+    private final RuleEngine ruleEngine;
     // Handle repository operations
-    private RepositoryOperations repoOper;
+    private final RepositoryOperations repoOper;
     // Handle ontologies operations
-    private OntologyOperations ontOper;
+    private final OntologyOperations ontOper;
 
     // CONSTRUCTOR
     // -------------------------------------------------------------------------
@@ -140,8 +140,8 @@ public class RepositoryFacade {
      * Restores the backup file to the repository. This will erase any previous
      * data in the repository
      *
-     * @param url the main repository URL
-     * @param path the backup file path
+     * @param repositoryURL the main repository URL
+     * @param filePath the backup file path
      */
     public void restoreBackup(String repositoryURL, String filePath) {
         this.repoOper.restoreBackup(repositoryURL, filePath);
@@ -150,8 +150,8 @@ public class RepositoryFacade {
     /**
      * Exports each ontology in the repository to a folder
      *
-     * @param url the repository URL
-     * @param path the folder path where the ontologies will be saved
+     * @param repositoryURL the repository URL
+     * @param folderPath the folder path where the ontologies will be saved
      */
     public void exportRepositoryOntologies(String repositoryURL, String folderPath) {
         this.repoOper.exportRepositoryOntologies(repositoryURL, folderPath);
@@ -161,7 +161,7 @@ public class RepositoryFacade {
      * Add an ontology in the repository
      *
      * @param path the ontology path
-     * @param uri the ontology uri
+     * @param ontologyURI the ontology uri
      */
     public void addOntology(String path, String ontologyURI) {
         this.ontOper.addOntology(path, ontologyURI);
@@ -170,7 +170,7 @@ public class RepositoryFacade {
     /**
      * Removes an ontology of the repository
      *
-     * @param uri the ontology uri
+     * @param ontologyURI the ontology uri
      */
     public void deleteOntology(String ontologyURI) {
         this.ontOper.deleteOntology(ontologyURI);
@@ -180,7 +180,7 @@ public class RepositoryFacade {
      * Retrieves an ontology saving in the specified file path
      *
      * @param path the ontology file path
-     * @param uri the ontology uri
+     * @param ontologyURI the ontology uri
      */
     public void retrieveOntology(String path, String ontologyURI) {
         this.ontOper.retrieveOntology(path, ontologyURI);
@@ -199,27 +199,17 @@ public class RepositoryFacade {
      * Updates an ontology in the repository
      *
      * @param path the ontology file path
-     * @param uri the ontology uri
+     * @param ontologyURI the ontology uri
      */
     public void updateOntology(String path, String ontologyURI) {
         this.ontOper.updateOntology(path, ontologyURI);
     }
 
     /**
-     * Checks the ontology consistency
-     *
-     * @param path the ontology file path
-     * @return boolean true if the consistency is ok, else false
-     */
-    public boolean checkOntologyConsistency(String path) {
-        return this.ontOper.checkOntologyConsistency(path);
-    }
-
-    /**
      * Retrieves the OntologyCompiler to generate java code from ontologies
      *
      * @param path the jar file path wich the java code will be saved
-     * @param urls a list with the ontologies URLs
+     * @param ontologiesURLs a list with the ontologies URLs
      * @return compiler the compiler of ontologies
      */
     public OntologyCompiler getOntologyCompiler(String path, List<String> ontologiesURLs) {

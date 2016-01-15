@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.openrdf.repository.RepositoryException;
 import org.openrdf.rio.RDFParseException;
 import wwwc.nees.joint.compiler.model.rdf.Model;
 import wwwc.nees.joint.compiler.model.rdf.impl.LinkedHashModel;
@@ -31,7 +30,7 @@ public class OntologyCompiler {
     //Jar file that will be compiled the ontologies
     private final File jarFile;
     //List of ontologies URLs
-    private List<URL> ontologies;
+    private final List<URL> ontologies;
     //Alibaba OWLCompiler
     private OWLCompiler converter;
     //Variable to load ontologies

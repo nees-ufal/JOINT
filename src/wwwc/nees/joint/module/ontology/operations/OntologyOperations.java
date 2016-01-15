@@ -15,7 +15,7 @@ public interface OntologyOperations {
      *
      * @param path
      *            the ontology path
-     * @param uri
+     * @param ontologyURI
      *            the ontology uri
      */
     public void addOntology(String path, String ontologyURI);
@@ -23,7 +23,7 @@ public interface OntologyOperations {
     /**
      * Removes an ontology of the repository
      *
-     * @param uri
+     * @param ontologyURI
      *            the ontology uri
      */
     public void deleteOntology(String ontologyURI);
@@ -33,7 +33,7 @@ public interface OntologyOperations {
      *
      * @param path
      *            the ontology file path
-     * @param uri
+     * @param ontologyURI
      *            the ontology uri
      */
     public void retrieveOntology(String path, String ontologyURI);
@@ -51,27 +51,17 @@ public interface OntologyOperations {
      *
      * @param path
      *            the ontology file path
-     * @param uri
+     * @param ontologyURI
      *            the ontology uri
      */
     public void updateOntology(String path, String ontologyURI);
-
-    /**
-     * Checks the ontology consistency
-     *
-     * @param path
-     *            the ontology file path
-     * @return boolean
-     *            true if the consistency is ok, else false
-     */
-    public boolean checkOntologyConsistency(String path);
 
     /**
      * Retrieves the OntologyCompiler to generate java code from ontologies
      *
      * @param path
      *            the jar file path wich the java code will be saved
-     * @param urls
+     * @param ontologiesURLs
      *            a list with the ontologies URLs
      * @return compiler
      *            the compiler of ontologies
