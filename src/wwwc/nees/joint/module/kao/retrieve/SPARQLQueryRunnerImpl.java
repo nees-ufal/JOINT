@@ -348,7 +348,7 @@ public class SPARQLQueryRunnerImpl implements QueryRunner {
 
         for (Statement st : resultado) {
             if (st.getPredicate().toString().equals(RDF.TYPE.toString())) {
-                className = retrieveOp.getClassFromBase1(st.getObject().stringValue());
+                className = retrieveOp.getClassFromBase(st.getObject().stringValue());
                 result.close();
                 break;
             }
