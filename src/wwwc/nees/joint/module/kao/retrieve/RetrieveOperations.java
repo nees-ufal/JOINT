@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.commons.collections4.BidiMap;
 import wwwc.nees.joint.compiler.annotations.Iri;
 import org.openrdf.model.Literal;
 import org.openrdf.model.Statement;
@@ -29,10 +30,10 @@ import wwwc.nees.joint.module.kao.Operation;
 /**
  * @author Olavo
  */
-public class RetrieveOperations extends Operation{
+public class RetrieveOperations extends Operation {
 
     private final DatatypeManager datatypeManager;
-    private final Map<String, String> packages;
+    private final BidiMap<String, String> packages;
     private static final String OBJECT_CLASS = "java.lang.Object";
     private static final String SET_CLASS = "java.util.Set";
     private static final String METHOD_SET_INNERFIELDS = "setInnerModifiedFields";
@@ -112,8 +113,14 @@ public class RetrieveOperations extends Operation{
         return OBJECT_CLASS;
     }
 
-    public String getClassFromBase1(String obj) throws Exception {
-        String nameClasse = this.packages.get(obj);
+    /**
+     * Retrieves the class URI from the mapping between the RDFS and Java class
+     *
+     * @param java_class is the path for the class in java
+     * @return the base URI for the class
+     */
+    public String getClassFromBase(String java_class) {
+        String nameClasse = this.packages.getKey(java_class);
         if (nameClasse == null) {
             return OBJECT_CLASS;
         }
@@ -258,8 +265,8 @@ public class RetrieveOperations extends Operation{
                             //else it is an istance
                         } else {
                             //gets the class name from the triple store
-                            parameterClassName = this.getClassFromBase(connection, valueURI, contexts);
-                            //gets a new instance with its properties not loaded
+                            parameterClassName = this.getClassFromBase(parameterClassName);
+                            //gets a new instance with its properties not loaded                            
                             method.invoke(obj, this.
                                     getNotLoadedObject(valueURI, parameterClassName));
                         }

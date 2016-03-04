@@ -4,10 +4,13 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.text.Bidi;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.commons.collections4.BidiMap;
+import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 
 /**
  * Factory to get an instance of the Repository specified in the configuration
@@ -21,7 +24,7 @@ public class ConceptsPackageInfo {
     // VARIABLES
     // -------------------------------------------------------------------------
     // The repository static variable
-    private static Map<String, String> packages = null;
+    private static BidiMap<String, String> packages = null;
 
     // METHODS
     // -------------------------------------------------------------------------
@@ -30,12 +33,12 @@ public class ConceptsPackageInfo {
      *
      * @return repository a Repository object already initialized
      */
-    public static synchronized Map<String, String> getPackagesInfo(Class classe) {
+    public static synchronized BidiMap<String, String> getPackagesInfo(Class classe) {
 
         // If repository is null
         if (packages == null) {
 
-            packages = new HashMap<String, String>();
+            packages = new DualHashBidiMap<>();
             InputStream st = classe.getResourceAsStream("/META-INF/org.openrdf.conceptsMapping");
             InputStreamReader reader = new InputStreamReader(st);
 
@@ -63,7 +66,7 @@ public class ConceptsPackageInfo {
      */
     public static void readPackagesInfo() {
 
-        packages = new HashMap<String, String>();
+        packages = new DualHashBidiMap<>();
         InputStream st = ConceptsPackageInfo.class.getResourceAsStream("/META-INF/org.openrdf.concepts");
         InputStreamReader reader = new InputStreamReader(st);
 
